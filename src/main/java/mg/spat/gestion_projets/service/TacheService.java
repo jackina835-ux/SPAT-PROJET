@@ -1,0 +1,262 @@
+package mg.spat.gestion_projets.service;
+
+import mg.spat.gestion_projets.dto.KanbanDTO;
+import mg.spat.gestion_projets.dto.TacheCreationDTO;
+import mg.spat.gestion_projets.dto.TacheDTO;
+import mg.spat.gestion_projets.entity.*;
+import mg.spat.gestion_projets.exception.RegleMetierException;
+import mg.spat.gestion_projets.exception.RessourceIntrouvableException;
+import mg.spat.gestion_projets.repository.ProjetRepository;
+import mg.spat.gestion_projets.repository.TacheRepository;
+import mg.spat.gestion_projets.repository.UtilisateurRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Couche metier des taches.
+ */
+@Service
+@Transactional
+public class TacheService {
+
+    private final TacheRepository tacheRepository;
+    private final ProjetRepository projetRepository;
+    private final UtilisateurRepository utilisateurRepository;
+
+    public TacheService(TacheRepository tacheRepository,
+                        ProjetRepository projetRepository,
+                        UtilisateurRepository utilisateurRepository) {
+        this.tacheRepository = tacheRepository;
+        this.projetRepository = projetRepository;
+        this.utilisateurRepository = utilisateurRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public TacheDTO consulter(Long id) {
+        return TacheDTO.depuis(trouverOuEchouer(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TacheDTO> listerParProjet(Long projetId) {
+        verifierProjetExiste(projetId);
+        return tacheRepository.findByProjetId(projetId).stream()
+                .map(TacheDTO::depuis)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TacheDTO> listerParUtilisateur(Long utilisateurId) {
+        return tacheRepository.findByAssigneAId(utilisateurId).stream()
+                .map(TacheDTO::depuis)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TacheDTO> listerSousTaches(Long tacheParentId) {
+        return tacheRepository.findByTacheParentId(tacheParentId).stream()
+                .map(TacheDTO::depuis)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TacheDTO> listerEnRetard(Long projetId) {
+        verifierProjetExiste(projetId);
+        return tacheRepository.findTachesEnRetard(projetId).stream()
+                .map(TacheDTO::depuis)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Vue complete du tableau Kanban : une entree par colonne,
+     * meme quand la colonne est vide.
+     */
+    @Transactional(readOnly = true)
+    public KanbanDTO construireKanban(Long projetId) {
+        Projet projet = projetRepository.findById(projetId)
+                .orElseThrow(() -> RessourceIntrouvableException.pour("Projet", projetId));
+
+        List<Tache> taches = tacheRepository.findByProjetId(projetId);
+
+        Map<String, List<TacheDTO>> colonnes = new LinkedHashMap<>();
+        Map<String, Long> compteurs = new LinkedHashMap<>();
+
+        for (StatutTache statut : StatutTache.values()) {
+            List<TacheDTO> contenu = taches.stream()
+                    .filter(t -> t.getStatut() == statut)
+                    .map(TacheDTO::depuis)
+                    .collect(Collectors.toList());
+            colonnes.put(statut.name(), contenu);
+            compteurs.put(statut.name(), (long) contenu.size());
+        }
+
+        long enRetard = taches.stream().filter(Tache::estEnRetard).count();
+
+        KanbanDTO kanban = new KanbanDTO();
+        kanban.setProjetId(projet.getId());
+        kanban.setProjetNom(projet.getNom());
+        kanban.setAvancement(projet.calculerAvancement());
+        kanban.setColonnes(colonnes);
+        kanban.setCompteurs(compteurs);
+        kanban.setTotalTaches(taches.size());
+        kanban.setTachesEnRetard((int) enRetard);
+        return kanban;
+    }
+
+    public TacheDTO creer(TacheCreationDTO demande) {
+        Projet projet = projetRepository.findById(demande.getProjetId())
+                .orElseThrow(() -> RessourceIntrouvableException.pour(
+                        "Projet", demande.getProjetId()));
+
+        Tache tache = new Tache();
+        tache.setProjet(projet);
+        appliquer(demande, tache, projet);
+
+        return TacheDTO.depuis(tacheRepository.save(tache));
+    }
+
+    public TacheDTO modifier(Long id, TacheCreationDTO demande) {
+        Tache tache = trouverOuEchouer(id);
+
+        Projet projet = projetRepository.findById(demande.getProjetId())
+                .orElseThrow(() -> RessourceIntrouvableException.pour(
+                        "Projet", demande.getProjetId()));
+
+        tache.setProjet(projet);
+        appliquer(demande, tache, projet);
+
+        return TacheDTO.depuis(tacheRepository.save(tache));
+    }
+
+    /**
+     * Appele a chaque deplacement de carte dans le Kanban.
+     */
+    public TacheDTO changerStatut(Long id, StatutTache nouveauStatut) {
+        Tache tache = trouverOuEchouer(id);
+
+        if (nouveauStatut == StatutTache.TERMINEE) {
+            boolean sousTachesEnCours = tache.getSousTaches().stream()
+                    .anyMatch(st -> st.getStatut() != StatutTache.TERMINEE);
+            if (sousTachesEnCours) {
+                throw new RegleMetierException(
+                        "Impossible de terminer cette tache : certaines sous-taches "
+                      + "ne sont pas encore terminees");
+            }
+        }
+
+        tache.changerStatut(nouveauStatut);
+        return TacheDTO.depuis(tacheRepository.save(tache));
+    }
+
+    public TacheDTO assigner(Long tacheId, Long utilisateurId) {
+        Tache tache = trouverOuEchouer(tacheId);
+        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
+                .orElseThrow(() -> RessourceIntrouvableException.pour(
+                        "Utilisateur", utilisateurId));
+
+        if (Boolean.FALSE.equals(utilisateur.getActif())) {
+            throw new RegleMetierException(
+                    "Impossible d'assigner une tache a un compte desactive");
+        }
+        if (!tache.getProjet().getMembres().contains(utilisateur)) {
+            throw new RegleMetierException(
+                    "Cet utilisateur n'est pas membre du projet de la tache");
+        }
+
+        tache.setAssigneA(utilisateur);
+        return TacheDTO.depuis(tacheRepository.save(tache));
+    }
+
+    public TacheDTO desassigner(Long tacheId) {
+        Tache tache = trouverOuEchouer(tacheId);
+        tache.setAssigneA(null);
+        return TacheDTO.depuis(tacheRepository.save(tache));
+    }
+
+    public void supprimer(Long id) {
+        Tache tache = trouverOuEchouer(id);
+        tacheRepository.delete(tache);
+    }
+
+    // ---------------------------------------------------------------
+
+    private void appliquer(TacheCreationDTO demande, Tache tache, Projet projet) {
+        tache.setTitre(demande.getTitre());
+        tache.setDescription(demande.getDescription());
+        tache.setDateEcheance(demande.getDateEcheance());
+        tache.setChargeEstimee(demande.getChargeEstimee());
+
+        if (demande.getPriorite() != null) {
+            tache.setPriorite(demande.getPriorite());
+        }
+        if (demande.getStatut() != null) {
+            tache.setStatut(demande.getStatut());
+        }
+
+        verifierEcheanceDansLeProjet(demande, projet);
+        rattacherResponsable(demande, tache, projet);
+        rattacherTacheParente(demande, tache, projet);
+    }
+
+    private void verifierEcheanceDansLeProjet(TacheCreationDTO demande, Projet projet) {
+        if (demande.getDateEcheance() != null
+                && projet.getDateFin() != null
+                && demande.getDateEcheance().isAfter(projet.getDateFin())) {
+            throw new RegleMetierException(
+                    "L'echeance de la tache depasse la date de fin du projet");
+        }
+    }
+
+    private void rattacherResponsable(TacheCreationDTO demande, Tache tache, Projet projet) {
+        if (demande.getAssigneAId() == null) {
+            tache.setAssigneA(null);
+            return;
+        }
+        Utilisateur responsable = utilisateurRepository.findById(demande.getAssigneAId())
+                .orElseThrow(() -> RessourceIntrouvableException.pour(
+                        "Utilisateur", demande.getAssigneAId()));
+
+        if (!projet.getMembres().contains(responsable)) {
+            throw new RegleMetierException(
+                    "Cet utilisateur n'est pas membre du projet");
+        }
+        tache.setAssigneA(responsable);
+    }
+
+    private void rattacherTacheParente(TacheCreationDTO demande, Tache tache, Projet projet) {
+        if (demande.getTacheParentId() == null) {
+            tache.setTacheParent(null);
+            return;
+        }
+        if (tache.getId() != null && tache.getId().equals(demande.getTacheParentId())) {
+            throw new RegleMetierException(
+                    "Une tache ne peut pas etre sa propre sous-tache");
+        }
+
+        Tache parente = tacheRepository.findById(demande.getTacheParentId())
+                .orElseThrow(() -> RessourceIntrouvableException.pour(
+                        "Tache", demande.getTacheParentId()));
+
+        if (!parente.getProjet().getId().equals(projet.getId())) {
+            throw new RegleMetierException(
+                    "La tache parente doit appartenir au meme projet");
+        }
+        tache.setTacheParent(parente);
+    }
+
+    private Tache trouverOuEchouer(Long id) {
+        return tacheRepository.findById(id)
+                .orElseThrow(() -> RessourceIntrouvableException.pour("Tache", id));
+    }
+
+    private void verifierProjetExiste(Long projetId) {
+        if (!projetRepository.existsById(projetId)) {
+            throw RessourceIntrouvableException.pour("Projet", projetId);
+        }
+    }
+}

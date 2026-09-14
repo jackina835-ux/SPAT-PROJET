@@ -2,6 +2,8 @@ package mg.spat.gestion_projets.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,6 +29,18 @@ public class GestionnaireErreurs {
     @ExceptionHandler(RegleMetierException.class)
     public ResponseEntity<Map<String, Object>> regleMetier(RegleMetierException ex) {
         return reponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> accesRefuse(AccessDeniedException ex) {
+        return reponse(HttpStatus.FORBIDDEN,
+                "Vous n'avez pas les droits necessaires pour cette action");
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> authentification(AuthenticationException ex) {
+        return reponse(HttpStatus.UNAUTHORIZED,
+                "Authentification requise ou jeton invalide");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

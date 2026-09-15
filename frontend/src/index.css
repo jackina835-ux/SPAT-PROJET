@@ -1,0 +1,802 @@
+/* ============================================================
+   Plateforme de gestion de projets et de taches - SPAT
+   Feuille de style unique
+   ============================================================ */
+
+:root {
+  --fond: #f7f6f2;
+  --surface: #ffffff;
+  --bordure: #e4e2da;
+  --bordure-forte: #cfccc2;
+
+  --texte: #2b2b28;
+  --texte-doux: #6e6c64;
+
+  --accent: #0f766e;
+  --accent-clair: #e6f4f1;
+  --accent-fonce: #0b5a54;
+
+  --alerte: #b4453a;
+  --alerte-clair: #fbeceb;
+
+  --rayon: 10px;
+  --ombre: 0 1px 2px rgba(30, 30, 25, 0.05),
+           0 4px 12px rgba(30, 30, 25, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1 { font-size: 1.6rem; margin: 0 0 2px; }
+h2 { font-size: 1.05rem; margin: 0 0 6px; }
+h3 { font-size: 0.93rem; margin: 0 0 6px; line-height: 1.35; }
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------------- Mise en page ---------------- */
+
+.conteneur {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+.conteneur-large { max-width: 1400px; }
+
+.bandeau-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fil-ariane {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--texte-doux);
+  margin-bottom: 14px;
+}
+.fil-ariane a:hover { color: var(--accent); }
+
+.texte-discret { color: var(--texte-doux); margin: 0; }
+.texte-alerte { color: var(--alerte); font-weight: 600; }
+.petit { font-size: 0.82rem; }
+
+.etat-vide {
+  padding: 48px;
+  text-align: center;
+  color: var(--texte-doux);
+  background: var(--surface);
+  border: 1px dashed var(--bordure-forte);
+  border-radius: var(--rayon);
+}
+
+/* ---------------- En-tete ---------------- */
+
+.entete {
+  background: var(--surface);
+  border-bottom: 1px solid var(--bordure);
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.entete-marque { display: flex; align-items: center; gap: 10px; }
+.entete-marque small { display: block; color: var(--texte-doux); font-size: 0.75rem; }
+
+.entete-logo {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.entete-droite { display: flex; align-items: center; gap: 14px; }
+.entete-profil { text-align: right; line-height: 1.25; }
+.entete-profil small { display: block; color: var(--texte-doux); font-size: 0.76rem; }
+
+/* ---------------- Boutons ---------------- */
+
+.bouton {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bouton-principal { background: var(--accent); color: #fff; }
+.bouton-principal:hover { background: var(--accent-fonce); }
+.bouton-principal:disabled { opacity: 0.6; cursor: default; }
+
+.bouton-discret {
+  background: transparent;
+  border-color: var(--bordure-forte);
+  color: var(--texte-doux);
+}
+.bouton-discret:hover { background: var(--fond); color: var(--texte); }
+
+.bouton-large { width: 100%; padding: 11px; }
+
+.bouton-icone {
+  background: none; border: none;
+  color: var(--bordure-forte);
+  font-size: 1.2rem; line-height: 1;
+  cursor: pointer; padding: 0 2px;
+}
+.bouton-icone:hover { color: var(--alerte); }
+
+/* ---------------- Cartes et formulaires ---------------- */
+
+.carte {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 18px;
+  box-shadow: var(--ombre);
+}
+
+.formulaire { margin-bottom: 24px; }
+
+.champ { display: block; margin-bottom: 14px; }
+.champ > span {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texte-doux);
+  margin-bottom: 5px;
+}
+
+.champ input,
+.champ textarea,
+.champ select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--bordure-forte);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--surface);
+  color: var(--texte);
+}
+.champ input:focus,
+.champ textarea:focus,
+.champ select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-clair);
+}
+
+.ligne-champs { display: flex; gap: 14px; flex-wrap: wrap; }
+.ligne-champs .champ { flex: 1; min-width: 150px; }
+
+.alerte {
+  background: var(--alerte-clair);
+  border: 1px solid #f0cfcb;
+  color: var(--alerte);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.87rem;
+  margin-bottom: 16px;
+}
+
+/* ---------------- Page de connexion ---------------- */
+
+.page-connexion {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.carte-connexion {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  padding: 34px 30px;
+  box-shadow: var(--ombre);
+}
+
+.connexion-logo {
+  width: 46px; height: 46px;
+  border-radius: 11px;
+  background: var(--accent);
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.connexion-sous-titre {
+  color: var(--texte-doux);
+  font-size: 0.85rem;
+  margin: 4px 0 24px;
+}
+
+/* ---------------- Liste des projets ---------------- */
+
+.grille-projets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+
+.carte-projet {
+  display: block;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.carte-projet:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.carte-projet-haut {
+  display: flex; gap: 6px;
+  margin-bottom: 10px;
+}
+
+.carte-projet-description {
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.carte-projet-bas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bordure);
+}
+
+/* ---------------- Etiquettes ---------------- */
+
+.etiquette {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.etiquette-PLANIFIE { background: #eeedea; color: #5f5d56; }
+.etiquette-EN_COURS { background: var(--accent-clair); color: var(--accent-fonce); }
+.etiquette-TERMINE  { background: #e8f0e4; color: #3f6b34; }
+.etiquette-retard   { background: var(--alerte-clair); color: var(--alerte); }
+
+.etiquette-BASSE    { background: #eeedea; color: #66645c; }
+.etiquette-MOYENNE  { background: #e7eef5; color: #3c5b78; }
+.etiquette-HAUTE    { background: #fbeee0; color: #9a6224; }
+.etiquette-URGENTE  { background: var(--alerte-clair); color: var(--alerte); }
+
+/* ---------------- Progression ---------------- */
+
+.barre-progression {
+  height: 5px;
+  background: #eceae4;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.barre-progression-large { height: 6px; margin-bottom: 20px; }
+
+.barre-progression-remplie {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+/* ---------------- Pastilles ---------------- */
+
+.pastilles { display: flex; gap: -4px; }
+.pastilles .pastille:not(:first-child) { margin-left: -6px; }
+
+.pastille {
+  width: 25px; height: 25px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid; place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 2px solid var(--surface);
+  flex-shrink: 0;
+}
+.pastille-plus { background: var(--bordure-forte); color: var(--texte); }
+.pastille-vide {
+  background: transparent;
+  border: 1px dashed var(--bordure-forte);
+  color: var(--bordure-forte);
+}
+
+/* ---------------- Tableau Kanban ---------------- */
+
+.tableau-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.colonne {
+  background: #efedE7;
+  border: 1px solid transparent;
+  border-radius: var(--rayon);
+  padding: 12px;
+  min-height: 240px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.colonne-survolee {
+  background: var(--accent-clair);
+  border-color: var(--accent);
+}
+
+.colonne-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 4px;
+  font-size: 0.85rem;
+}
+
+.compteur {
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 20px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--texte-doux);
+}
+
+.point {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.point-A_FAIRE     { background: #9d9b93; }
+.point-EN_COURS    { background: #3c7fb1; }
+.point-EN_REVISION { background: #c9902f; }
+.point-TERMINEE    { background: #4f8f42; }
+
+.colonne-contenu { display: flex; flex-direction: column; gap: 9px; }
+
+.colonne-vide {
+  text-align: center;
+  color: var(--texte-doux);
+  font-size: 0.8rem;
+  padding: 18px 0;
+}
+
+.carte-tache {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 9px;
+  padding: 11px 12px;
+  box-shadow: 0 1px 2px rgba(30, 30, 25, 0.05);
+  cursor: grab;
+}
+.carte-tache:active { cursor: grabbing; }
+
+.carte-tache-deplacee {
+  box-shadow: 0 8px 20px rgba(30, 30, 25, 0.16);
+  transform: rotate(1.5deg);
+}
+
+.carte-tache-haut {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 7px;
+}
+
+.carte-tache-bas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.date-echeance {
+  font-size: 0.76rem;
+  color: var(--texte-doux);
+  background: var(--fond);
+  border-radius: 5px;
+  padding: 1px 7px;
+}
+.date-echeance-retard {
+  background: var(--alerte-clair);
+  color: var(--alerte);
+  font-weight: 600;
+}
+
+/* ---------------- Petits ecrans ---------------- */
+
+@media (max-width: 900px) {
+  .tableau-kanban {
+    grid-template-columns: 1fr;
+  }
+  .bandeau-page {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+/* ============================================================
+   A COLLER A LA FIN DE src/index.css
+   Deux ajouts lies aux droits par role.
+   ============================================================ */
+
+/* Etiquette "Je dirige" sur les projets dont on est responsable */
+.etiquette-moi {
+  background: #efe9f5;
+  color: #5b4380;
+}
+
+/* Message affiche a un membre qui n'a pas les droits de gestion */
+.note-lecture {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--texte-doux);
+  margin-bottom: 18px;
+}
+
+/* Carte que l'utilisateur n'a pas le droit de deplacer */
+.carte-tache-figee {
+  cursor: default;
+  opacity: 0.72;
+}
+.carte-tache-figee:active {
+  cursor: default;
+}
+
+/* ============================================================
+   Panneau lateral : detail d'une tache et discussion
+   ============================================================ */
+
+.voile {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 34, 30, 0.32);
+  z-index: 40;
+  animation: apparition 0.15s ease-out;
+}
+
+@keyframes apparition {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes glissement {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.panneau {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 440px;
+  max-width: 100vw;
+  background: var(--surface);
+  border-left: 1px solid var(--bordure);
+  box-shadow: -8px 0 28px rgba(30, 30, 25, 0.1);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  animation: glissement 0.2s ease-out;
+}
+
+.panneau-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--bordure);
+  flex-shrink: 0;
+}
+
+.panneau-titre-petit {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+.panneau-corps {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.panneau-etiquettes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.etiquette-statut {
+  background: #eceaE4;
+  color: #5f5d56;
+}
+
+.panneau-titre {
+  font-size: 1.22rem;
+  line-height: 1.3;
+  margin: 0 0 10px;
+}
+
+.panneau-description {
+  font-size: 0.9rem;
+  color: var(--texte);
+  margin: 0 0 20px;
+  white-space: pre-wrap;
+}
+
+.panneau-section {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--bordure);
+}
+
+.panneau-sous-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+  margin: 0 0 12px;
+}
+
+/* ---- Fiche d'informations ---- */
+
+.fiche {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.fiche > div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: baseline;
+  gap: 10px;
+}
+.fiche dt {
+  font-size: 0.8rem;
+  color: var(--texte-doux);
+}
+.fiche dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* ---- Sous-taches ---- */
+
+.liste-sous-taches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.liste-sous-taches li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.88rem;
+}
+.texte-barre {
+  text-decoration: line-through;
+  color: var(--texte-doux);
+}
+
+/* ---- Fil de discussion ---- */
+
+.fil-discussion {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.commentaire {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.commentaire-corps { flex: 1; min-width: 0; }
+
+.commentaire-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.commentaire-entete strong { font-size: 0.86rem; }
+
+.commentaire-supprimer {
+  margin-left: auto;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.commentaire:hover .commentaire-supprimer { opacity: 1; }
+
+.commentaire-texte {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.formulaire-commentaire textarea {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--bordure-forte);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  margin-bottom: 9px;
+  background: var(--surface);
+  color: var(--texte);
+}
+.formulaire-commentaire textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-clair);
+}
+
+/* La carte du Kanban devient cliquable */
+.carte-tache h3 { cursor: pointer; }
+
+@media (max-width: 560px) {
+  .panneau { width: 100vw; }
+  .fiche > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ============================================================
+   Repartition de la charge de travail
+   ============================================================ */
+
+.bandeau-actions {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.liste-charges {
+  display: grid;
+  gap: 14px;
+}
+
+.carte-charge { padding: 18px 20px; }
+
+.charge-entete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.charge-identite { flex: 1; min-width: 0; }
+.charge-identite strong { display: block; font-size: 0.98rem; }
+.charge-identite small { font-size: 0.78rem; }
+
+.pastille-grande {
+  width: 38px; height: 38px;
+  font-size: 0.98rem;
+  border-width: 0;
+}
+
+/* ---- Les quatre chiffres cles ---- */
+
+.charge-chiffres {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.charge-chiffres > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.charge-chiffres strong {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+.charge-chiffres small { font-size: 0.75rem; }
+
+.charge-echeance { margin-top: 4px; }
+
+/* ---- Niveaux de charge ---- */
+
+.etiquette-niv-LIBRE     { background: #e8f0e4; color: #3f6b34; }
+.etiquette-niv-NORMAL    { background: var(--accent-clair); color: var(--accent-fonce); }
+.etiquette-niv-CHARGE    { background: #fbeee0; color: #9a6224; }
+.etiquette-niv-SURCHARGE { background: var(--alerte-clair); color: var(--alerte); }
+
+.barre-niv-LIBRE     { background: #6d9a5f; }
+.barre-niv-NORMAL    { background: var(--accent); }
+.barre-niv-CHARGE    { background: #c9902f; }
+.barre-niv-SURCHARGE { background: var(--alerte); }
+
+/* ---- Detail par statut et par priorite ---- */
+
+.charge-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bordure);
+}
+
+.charge-details-titre {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+  margin-bottom: 8px;
+}
+
+.charge-details ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.charge-details li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.83rem;
+}
+
+@media (max-width: 640px) {
+  .charge-chiffres { grid-template-columns: repeat(2, 1fr); }
+  .charge-details  { grid-template-columns: 1fr; gap: 14px; }
+}

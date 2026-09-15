@@ -17,15 +17,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/**
- * Configuration de la securite.
- *
- * Seule la connexion est ouverte. Tout le reste exige un jeton
- * JWT valide, et les droits fins sont poses methode par methode
- * dans les controleurs grace a @PreAuthorize.
- *
- * @EnableMethodSecurity est ce qui active ces annotations.
- */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -44,11 +35,12 @@ public class SecurityConfig {
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Requetes preliminaires envoyees par le navigateur
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Seule porte ouverte : se connecter
                 .requestMatchers(HttpMethod.POST, "/api/auth/connexion").permitAll()
-                // Tout le reste exige un jeton
+                // Page d'erreur interne de Spring : elle doit rester
+                // ouverte, sinon une exception dans un controleur est
+                // transformee en 403 vide et la vraie cause disparait.
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFiltre, UsernamePasswordAuthenticationFilter.class);
@@ -56,10 +48,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * BCrypt : algorithme de hachage des mots de passe.
-     * Un mot de passe hache ne peut pas etre relu, seulement compare.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -70,11 +58,13 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
                 "http://localhost:3000"));
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

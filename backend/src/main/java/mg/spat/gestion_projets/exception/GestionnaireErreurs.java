@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -41,6 +42,18 @@ public class GestionnaireErreurs {
     public ResponseEntity<Map<String, Object>> authentification(AuthenticationException ex) {
         return reponse(HttpStatus.UNAUTHORIZED,
                 "Authentification requise ou jeton invalide");
+    }
+
+    /**
+     * Le fichier depasse la taille autorisee.
+     * Sans ce traitement, Tomcat renverrait une page d'erreur
+     * HTML que le frontend ne saurait pas lire.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> fichierTropVolumineux(
+            MaxUploadSizeExceededException ex) {
+        return reponse(HttpStatus.BAD_REQUEST,
+                "Le fichier depasse la taille maximale autorisee (10 Mo)");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

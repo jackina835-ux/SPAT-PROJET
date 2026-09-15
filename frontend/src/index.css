@@ -1101,3 +1101,186 @@ a { color: inherit; text-decoration: none; }
   .cloche-panneau { width: calc(100vw - 24px); right: -8px; }
   .entete-profil { display: none; }
 }
+
+/* ============================================================
+   Suivi du temps passe
+   ============================================================ */
+
+.temps-ajouter { margin-left: auto; text-transform: none; letter-spacing: 0; }
+
+.temps-resume {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.temps-resume > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.temps-resume strong {
+  font-size: 1.1rem;
+  line-height: 1.15;
+  font-weight: 700;
+}
+.temps-resume small { font-size: 0.73rem; }
+
+.barre-depassement { background: var(--alerte); }
+
+.formulaire-temps {
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  padding: 13px 14px 6px;
+  margin: 14px 0;
+}
+.formulaire-temps .champ { margin-bottom: 11px; }
+.formulaire-temps .ligne-champs .champ { min-width: 88px; }
+
+.liste-saisies {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.saisie {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--bordure);
+}
+.saisie:last-child { border-bottom: none; padding-bottom: 0; }
+
+.saisie-duree {
+  background: var(--accent-clair);
+  color: var(--accent-fonce);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.saisie-corps {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.saisie-texte {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.saisie-supprimer {
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.saisie:hover .saisie-supprimer { opacity: 1; }
+
+@media (max-width: 480px) {
+  .temps-resume { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   Pieces jointes
+   ============================================================ */
+
+.liste-pieces {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.piece {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: border-color 0.15s;
+}
+.piece:hover { border-color: var(--bordure-forte); }
+
+.piece-icone {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.piece-PDF          { background: var(--alerte-clair); color: var(--alerte); }
+.piece-IMAGE        { background: #e9eef8; color: #3a5390; }
+.piece-DOCUMENT     { background: #e7eef5; color: #35526e; }
+.piece-TABLEUR      { background: #e8f0e4; color: #3f6b34; }
+.piece-PRESENTATION { background: #fbeee0; color: #8a5720; }
+.piece-TEXTE        { background: #eeedea; color: #5f5d56; }
+.piece-ARCHIVE      { background: #f0ebe2; color: #7a6647; }
+.piece-AUTRE        { background: #eeedea; color: #66645c; }
+
+.piece-corps {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.piece-nom {
+  font-size: 0.85rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.piece-corps:hover .piece-nom {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.piece-supprimer {
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.piece:hover .piece-supprimer { opacity: 1; }
+
+/* ---- Zone de depot ---- */
+
+.depot-fichier {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.bouton-fichier {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0;
+}
+.bouton-fichier input { display: none; }

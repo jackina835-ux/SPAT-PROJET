@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import * as apiTaches from "../api/taches";
 import * as apiCommentaires from "../api/commentaires";
+import * as apiTemps from "../api/temps";
+import * as apiPieces from "../api/pieces";
 import { messageErreur } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { estAdmin, estResponsable } from "../utils/droits";
@@ -17,6 +19,17 @@ const LIBELLE_PRIORITE = {
   MOYENNE: "Moyenne",
   HAUTE: "Haute",
   URGENTE: "Urgente",
+};
+
+const ETIQUETTE_FICHIER = {
+  PDF: "PDF",
+  IMAGE: "IMG",
+  DOCUMENT: "DOC",
+  TABLEUR: "XLS",
+  PRESENTATION: "PPT",
+  TEXTE: "TXT",
+  ARCHIVE: "ZIP",
+  AUTRE: "FIC",
 };
 
 function formaterDateLongue(valeur) {
@@ -63,6 +76,19 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
   const [brouillon, setBrouillon] = useState("");
   const [envoi, setEnvoi] = useState(false);
 
+  const [pieces, setPieces] = useState([]);
+  const [envoiFichier, setEnvoiFichier] = useState(false);
+  const [progression, setProgression] = useState(0);
+
+  const [recap, setRecap] = useState(null);
+  const [saisieOuverte, setSaisieOuverte] = useState(false);
+  const [saisie, setSaisie] = useState({
+    heures: "",
+    minutes: "",
+    dateTravail: new Date().toISOString().slice(0, 10),
+    commentaire: "",
+  });
+
   const gestionnaire = estAdmin(utilisateur) || estResponsable(utilisateur, projet);
   const estMembre = projet?.membres?.some((m) => m.id === utilisateur?.id);
 
@@ -72,15 +98,19 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
     async function charger() {
       setChargement(true);
       try {
-        const [rTache, rSous, rComm] = await Promise.all([
+        const [rTache, rSous, rComm, rTemps, rPieces] = await Promise.all([
           apiTaches.consulterTache(tacheId),
           apiTaches.listerSousTaches(tacheId),
           apiCommentaires.listerCommentaires(tacheId),
+          apiTemps.recapTache(tacheId),
+          apiPieces.listerPieces(tacheId),
         ]);
         if (annule) return;
         setTache(rTache.data);
         setSousTaches(rSous.data);
         setCommentaires(rComm.data);
+        setRecap(rTemps.data);
+        setPieces(rPieces.data);
         setErreur("");
       } catch (e) {
         if (!annule) setErreur(messageErreur(e, "Impossible de charger la tache"));
@@ -136,6 +166,100 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
     try {
       await apiCommentaires.supprimerCommentaire(id);
       await rechargerCommentaires();
+      onChangement?.();
+    } catch (e) {
+      setErreur(messageErreur(e, "Suppression impossible"));
+    }
+  }
+
+  async function rechargerPieces() {
+    const { data } = await apiPieces.listerPieces(tacheId);
+    setPieces(data);
+  }
+
+  async function choisirFichier(evenement) {
+    const fichier = evenement.target.files?.[0];
+    if (!fichier) return;
+
+    setEnvoiFichier(true);
+    setProgression(0);
+    try {
+      await apiPieces.deposerPiece(tacheId, fichier, setProgression);
+      await rechargerPieces();
+      onChangement?.();
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Envoi impossible"));
+    } finally {
+      setEnvoiFichier(false);
+      setProgression(0);
+      evenement.target.value = "";
+    }
+  }
+
+  async function telecharger(piece) {
+    try {
+      await apiPieces.telechargerPiece(piece.id, piece.nomOriginal);
+    } catch (e) {
+      setErreur(messageErreur(e, "Telechargement impossible"));
+    }
+  }
+
+  async function supprimerPiece(id) {
+    if (!window.confirm("Supprimer ce fichier ?")) return;
+    try {
+      await apiPieces.supprimerPiece(id);
+      await rechargerPieces();
+      onChangement?.();
+    } catch (e) {
+      setErreur(messageErreur(e, "Suppression impossible"));
+    }
+  }
+
+  async function rechargerTemps() {
+    const { data } = await apiTemps.recapTache(tacheId);
+    setRecap(data);
+  }
+
+  async function enregistrerTemps(evenement) {
+    evenement.preventDefault();
+
+    const h = parseInt(saisie.heures || "0", 10);
+    const m = parseInt(saisie.minutes || "0", 10);
+    const total = h * 60 + m;
+
+    if (total <= 0) {
+      setErreur("Indiquez une duree superieure a zero");
+      return;
+    }
+
+    try {
+      await apiTemps.saisirTemps({
+        tacheId: Number(tacheId),
+        dureeMinutes: total,
+        dateTravail: saisie.dateTravail,
+        commentaire: saisie.commentaire || null,
+      });
+      setSaisie({
+        heures: "",
+        minutes: "",
+        dateTravail: new Date().toISOString().slice(0, 10),
+        commentaire: "",
+      });
+      setSaisieOuverte(false);
+      await rechargerTemps();
+      onChangement?.();
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Saisie impossible"));
+    }
+  }
+
+  async function supprimerSaisie(id) {
+    if (!window.confirm("Supprimer cette saisie de temps ?")) return;
+    try {
+      await apiTemps.supprimerSaisie(id);
+      await rechargerTemps();
       onChangement?.();
     } catch (e) {
       setErreur(messageErreur(e, "Suppression impossible"));
@@ -238,6 +362,220 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
                 </ul>
               </section>
             )}
+
+            <section className="panneau-section">
+              <h3 className="panneau-sous-titre">
+                Pieces jointes
+                <span className="compteur">{pieces.length}</span>
+              </h3>
+
+              {pieces.length === 0 ? (
+                <p className="texte-discret petit">Aucun fichier joint.</p>
+              ) : (
+                <ul className="liste-pieces">
+                  {pieces.map((piece) => (
+                    <li key={piece.id} className="piece">
+                      <span className={`piece-icone piece-${piece.categorie}`}>
+                        {ETIQUETTE_FICHIER[piece.categorie] || "FIC"}
+                      </span>
+
+                      <button
+                        className="piece-corps"
+                        onClick={() => telecharger(piece)}
+                        title="Telecharger"
+                      >
+                        <span className="piece-nom">{piece.nomOriginal}</span>
+                        <span className="texte-discret petit">
+                          {piece.tailleLisible} · {piece.deposant.nomComplet}
+                        </span>
+                      </button>
+
+                      <button
+                        className="bouton-icone piece-supprimer"
+                        title="Supprimer"
+                        onClick={() => supprimerPiece(piece.id)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {(estMembre || gestionnaire) && (
+                <div className="depot-fichier">
+                  <label className="bouton bouton-discret bouton-fichier">
+                    {envoiFichier ? `Envoi… ${progression}%` : "Joindre un fichier"}
+                    <input
+                      type="file"
+                      onChange={choisirFichier}
+                      disabled={envoiFichier}
+                      hidden
+                    />
+                  </label>
+                  <span className="texte-discret petit">
+                    10 Mo maximum · pdf, images, bureautique, archives
+                  </span>
+                </div>
+              )}
+
+              {envoiFichier && (
+                <div className="barre-progression">
+                  <div
+                    className="barre-progression-remplie"
+                    style={{ width: `${progression}%` }}
+                  />
+                </div>
+              )}
+            </section>
+
+            <section className="panneau-section">
+              <h3 className="panneau-sous-titre">
+                Temps passe
+                <button
+                  className="lien-discret temps-ajouter"
+                  onClick={() => setSaisieOuverte(!saisieOuverte)}
+                >
+                  {saisieOuverte ? "Annuler" : "Saisir du temps"}
+                </button>
+              </h3>
+
+              {recap && (
+                <>
+                  <div className="temps-resume">
+                    <div>
+                      <strong>{recap.passeLisible}</strong>
+                      <small className="texte-discret">realise</small>
+                    </div>
+                    <div>
+                      <strong>{recap.estimeLisible}</strong>
+                      <small className="texte-discret">estime</small>
+                    </div>
+                    {recap.consommation !== null && (
+                      <div>
+                        <strong
+                          className={recap.depassement ? "texte-alerte" : undefined}
+                        >
+                          {recap.consommation}%
+                        </strong>
+                        <small className="texte-discret">consomme</small>
+                      </div>
+                    )}
+                  </div>
+
+                  {recap.consommation !== null && (
+                    <div className="barre-progression">
+                      <div
+                        className={
+                          "barre-progression-remplie" +
+                          (recap.depassement ? " barre-depassement" : "")
+                        }
+                        style={{
+                          width: `${Math.min(100, recap.consommation)}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {recap.consommation === null && (
+                    <p className="texte-discret petit">
+                      Aucune charge estimee sur cette tache : impossible de
+                      calculer un pourcentage.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {saisieOuverte && (
+                <form className="formulaire-temps" onSubmit={enregistrerTemps}>
+                  <div className="ligne-champs">
+                    <label className="champ">
+                      <span>Heures</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="16"
+                        value={saisie.heures}
+                        onChange={(e) =>
+                          setSaisie({ ...saisie, heures: e.target.value })
+                        }
+                        placeholder="2"
+                      />
+                    </label>
+                    <label className="champ">
+                      <span>Minutes</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        step="5"
+                        value={saisie.minutes}
+                        onChange={(e) =>
+                          setSaisie({ ...saisie, minutes: e.target.value })
+                        }
+                        placeholder="30"
+                      />
+                    </label>
+                    <label className="champ">
+                      <span>Date</span>
+                      <input
+                        type="date"
+                        value={saisie.dateTravail}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) =>
+                          setSaisie({ ...saisie, dateTravail: e.target.value })
+                        }
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <label className="champ">
+                    <span>Ce qui a ete fait</span>
+                    <input
+                      value={saisie.commentaire}
+                      onChange={(e) =>
+                        setSaisie({ ...saisie, commentaire: e.target.value })
+                      }
+                      placeholder="Redaction du premier jet"
+                    />
+                  </label>
+
+                  <button className="bouton bouton-principal">
+                    Enregistrer
+                  </button>
+                </form>
+              )}
+
+              {recap && recap.saisies.length > 0 && (
+                <ul className="liste-saisies">
+                  {recap.saisies.map((s) => (
+                    <li key={s.id} className="saisie">
+                      <span className="saisie-duree">{s.dureeLisible}</span>
+                      <span className="saisie-corps">
+                        <span className="saisie-texte">
+                          {s.commentaire || "Sans precision"}
+                        </span>
+                        <span className="texte-discret petit">
+                          {s.utilisateur.nomComplet} ·{" "}
+                          {new Date(s.dateTravail).toLocaleDateString("fr-FR", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
+                        </span>
+                      </span>
+                      <button
+                        className="bouton-icone saisie-supprimer"
+                        title="Supprimer"
+                        onClick={() => supprimerSaisie(s.id)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
             <section className="panneau-section">
               <h3 className="panneau-sous-titre">

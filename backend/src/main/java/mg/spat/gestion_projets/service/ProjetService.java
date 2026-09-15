@@ -4,6 +4,7 @@ import mg.spat.gestion_projets.dto.ProjetCreationDTO;
 import mg.spat.gestion_projets.dto.ProjetDTO;
 import mg.spat.gestion_projets.entity.Projet;
 import mg.spat.gestion_projets.entity.StatutProjet;
+import mg.spat.gestion_projets.entity.TypeNotification;
 import mg.spat.gestion_projets.entity.Utilisateur;
 import mg.spat.gestion_projets.exception.RegleMetierException;
 import mg.spat.gestion_projets.exception.RessourceIntrouvableException;
@@ -25,11 +26,14 @@ public class ProjetService {
 
     private final ProjetRepository projetRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final NotificationService notificationService;
 
     public ProjetService(ProjetRepository projetRepository,
-                         UtilisateurRepository utilisateurRepository) {
+                         UtilisateurRepository utilisateurRepository,
+                         NotificationService notificationService) {
         this.projetRepository = projetRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -124,7 +128,17 @@ public class ProjetService {
         }
 
         projet.ajouterMembre(membre);
-        return ProjetDTO.depuis(projetRepository.save(projet));
+        Projet enregistre = projetRepository.save(projet);
+
+        notificationService.notifier(
+                membre,
+                TypeNotification.AJOUT_PROJET,
+                notificationService.nomActeur()
+                    + " vous a ajoute au projet \"" + enregistre.getNom() + "\"",
+                null,
+                enregistre.getId());
+
+        return ProjetDTO.depuis(enregistre);
     }
 
     public ProjetDTO retirerMembre(Long projetId, Long utilisateurId) {

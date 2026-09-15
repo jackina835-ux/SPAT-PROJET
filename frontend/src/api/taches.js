@@ -4,6 +4,14 @@ export function chargerKanban(projetId) {
   return client.get(`/taches/projet/${projetId}/kanban`);
 }
 
+export function listerTachesProjet(projetId) {
+  return client.get(`/taches/projet/${projetId}`);
+}
+
+export function listerTachesUtilisateur(utilisateurId) {
+  return client.get(`/taches/utilisateur/${utilisateurId}`);
+}
+
 export function consulterTache(id) {
   return client.get(`/taches/${id}`);
 }

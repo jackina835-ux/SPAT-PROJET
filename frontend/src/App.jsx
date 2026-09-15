@@ -6,6 +6,7 @@ import Connexion from "./pages/Connexion";
 import ListeProjets from "./pages/ListeProjets";
 import Kanban from "./pages/Kanban";
 import Equipe from "./pages/Equipe";
+import Calendrier from "./pages/Calendrier";
 
 function Disposition({ children }) {
   return (
@@ -54,6 +55,17 @@ function Routage() {
           <RouteProtegee>
             <Disposition>
               <Equipe />
+            </Disposition>
+          </RouteProtegee>
+        }
+      />
+
+      <Route
+        path="/projets/:projetId/calendrier"
+        element={
+          <RouteProtegee>
+            <Disposition>
+              <Calendrier />
             </Disposition>
           </RouteProtegee>
         }

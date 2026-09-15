@@ -105,12 +105,20 @@ export default function Equipe() {
             {equipe.heuresMoyennesParMembre} h en moyenne
           </p>
         </div>
-        <Link
-          to={`/projets/${projetId}/kanban`}
-          className="bouton bouton-discret"
-        >
-          Voir le tableau
-        </Link>
+        <div className="bandeau-actions">
+          <Link
+            to={`/projets/${projetId}/calendrier`}
+            className="bouton bouton-discret"
+          >
+            Calendrier
+          </Link>
+          <Link
+            to={`/projets/${projetId}/kanban`}
+            className="bouton bouton-discret"
+          >
+            Voir le tableau
+          </Link>
+        </div>
       </div>
 
       {erreur && <div className="alerte">{erreur}</div>}

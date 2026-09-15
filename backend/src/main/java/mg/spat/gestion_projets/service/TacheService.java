@@ -28,13 +28,16 @@ public class TacheService {
     private final TacheRepository tacheRepository;
     private final ProjetRepository projetRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final NotificationService notificationService;
 
     public TacheService(TacheRepository tacheRepository,
                         ProjetRepository projetRepository,
-                        UtilisateurRepository utilisateurRepository) {
+                        UtilisateurRepository utilisateurRepository,
+                        NotificationService notificationService) {
         this.tacheRepository = tacheRepository;
         this.projetRepository = projetRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -117,7 +120,19 @@ public class TacheService {
         tache.setProjet(projet);
         appliquer(demande, tache, projet);
 
-        return TacheDTO.depuis(tacheRepository.save(tache));
+        Tache enregistree = tacheRepository.save(tache);
+
+        if (enregistree.getAssigneA() != null) {
+            notificationService.notifier(
+                    enregistree.getAssigneA(),
+                    TypeNotification.ASSIGNATION,
+                    notificationService.nomActeur()
+                        + " vous a confie la tache \"" + enregistree.getTitre() + "\"",
+                    enregistree.getId(),
+                    projet.getId());
+        }
+
+        return TacheDTO.depuis(enregistree);
     }
 
     public TacheDTO modifier(Long id, TacheCreationDTO demande) {
@@ -127,10 +142,42 @@ public class TacheService {
                 .orElseThrow(() -> RessourceIntrouvableException.pour(
                         "Projet", demande.getProjetId()));
 
+        Utilisateur ancienAssigne = tache.getAssigneA();
+
         tache.setProjet(projet);
         appliquer(demande, tache, projet);
 
-        return TacheDTO.depuis(tacheRepository.save(tache));
+        Tache enregistree = tacheRepository.save(tache);
+        Utilisateur nouvelAssigne = enregistree.getAssigneA();
+
+        boolean assignationChangee =
+                (ancienAssigne == null && nouvelAssigne != null)
+             || (ancienAssigne != null && nouvelAssigne == null)
+             || (ancienAssigne != null && nouvelAssigne != null
+                 && !ancienAssigne.getId().equals(nouvelAssigne.getId()));
+
+        if (assignationChangee) {
+            if (nouvelAssigne != null) {
+                notificationService.notifier(
+                        nouvelAssigne,
+                        TypeNotification.ASSIGNATION,
+                        notificationService.nomActeur()
+                            + " vous a confie la tache \"" + enregistree.getTitre() + "\"",
+                        enregistree.getId(),
+                        projet.getId());
+            }
+            if (ancienAssigne != null) {
+                notificationService.notifier(
+                        ancienAssigne,
+                        TypeNotification.DESASSIGNATION,
+                        notificationService.nomActeur()
+                            + " vous a retire la tache \"" + enregistree.getTitre() + "\"",
+                        enregistree.getId(),
+                        projet.getId());
+            }
+        }
+
+        return TacheDTO.depuis(enregistree);
     }
 
     /**
@@ -150,7 +197,38 @@ public class TacheService {
         }
 
         tache.changerStatut(nouveauStatut);
-        return TacheDTO.depuis(tacheRepository.save(tache));
+        Tache enregistree = tacheRepository.save(tache);
+
+        String texte = notificationService.nomActeur()
+                + " a deplace \"" + enregistree.getTitre() + "\" vers "
+                + libelle(nouveauStatut);
+
+        // La personne assignee, et le chef du projet
+        notificationService.notifier(
+                enregistree.getAssigneA(),
+                TypeNotification.CHANGEMENT_STATUT,
+                texte,
+                enregistree.getId(),
+                enregistree.getProjet().getId());
+
+        notificationService.notifier(
+                enregistree.getProjet().getResponsable(),
+                TypeNotification.CHANGEMENT_STATUT,
+                texte,
+                enregistree.getId(),
+                enregistree.getProjet().getId());
+
+        return TacheDTO.depuis(enregistree);
+    }
+
+    /** Libelle lisible d'un statut, pour les messages de notification. */
+    private String libelle(StatutTache statut) {
+        return switch (statut) {
+            case A_FAIRE -> "A faire";
+            case EN_COURS -> "En cours";
+            case EN_REVISION -> "En revision";
+            case TERMINEE -> "Terminee";
+        };
     }
 
     public TacheDTO assigner(Long tacheId, Long utilisateurId) {
@@ -169,13 +247,35 @@ public class TacheService {
         }
 
         tache.setAssigneA(utilisateur);
-        return TacheDTO.depuis(tacheRepository.save(tache));
+        Tache enregistree = tacheRepository.save(tache);
+
+        notificationService.notifier(
+                utilisateur,
+                TypeNotification.ASSIGNATION,
+                notificationService.nomActeur()
+                    + " vous a confie la tache \"" + enregistree.getTitre() + "\"",
+                enregistree.getId(),
+                enregistree.getProjet().getId());
+
+        return TacheDTO.depuis(enregistree);
     }
 
     public TacheDTO desassigner(Long tacheId) {
         Tache tache = trouverOuEchouer(tacheId);
+        Utilisateur ancien = tache.getAssigneA();
+
         tache.setAssigneA(null);
-        return TacheDTO.depuis(tacheRepository.save(tache));
+        Tache enregistree = tacheRepository.save(tache);
+
+        notificationService.notifier(
+                ancien,
+                TypeNotification.DESASSIGNATION,
+                notificationService.nomActeur()
+                    + " vous a retire la tache \"" + enregistree.getTitre() + "\"",
+                enregistree.getId(),
+                enregistree.getProjet().getId());
+
+        return TacheDTO.depuis(enregistree);
     }
 
     public void supprimer(Long id) {

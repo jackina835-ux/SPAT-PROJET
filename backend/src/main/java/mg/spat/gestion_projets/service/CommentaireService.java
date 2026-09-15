@@ -4,6 +4,7 @@ import mg.spat.gestion_projets.dto.CommentaireCreationDTO;
 import mg.spat.gestion_projets.dto.CommentaireDTO;
 import mg.spat.gestion_projets.entity.Commentaire;
 import mg.spat.gestion_projets.entity.Tache;
+import mg.spat.gestion_projets.entity.TypeNotification;
 import mg.spat.gestion_projets.entity.Utilisateur;
 import mg.spat.gestion_projets.exception.RegleMetierException;
 import mg.spat.gestion_projets.exception.RessourceIntrouvableException;
@@ -23,13 +24,16 @@ public class CommentaireService {
     private final CommentaireRepository commentaireRepository;
     private final TacheRepository tacheRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final NotificationService notificationService;
 
     public CommentaireService(CommentaireRepository commentaireRepository,
                               TacheRepository tacheRepository,
-                              UtilisateurRepository utilisateurRepository) {
+                              UtilisateurRepository utilisateurRepository,
+                              NotificationService notificationService) {
         this.commentaireRepository = commentaireRepository;
         this.tacheRepository = tacheRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +69,34 @@ public class CommentaireService {
         commentaire.setTache(tache);
         commentaire.setAuteur(auteur);
 
-        return CommentaireDTO.depuis(commentaireRepository.save(commentaire));
+        Commentaire enregistre = commentaireRepository.save(commentaire);
+
+        String texte = auteur.getNomComplet()
+                + " a commente \"" + tache.getTitre() + "\"";
+
+        // La personne assignee a la tache
+        notificationService.notifier(
+                tache.getAssigneA(),
+                TypeNotification.COMMENTAIRE,
+                texte,
+                tache.getId(),
+                tache.getProjet().getId());
+
+        // Le chef du projet, s'il n'est pas deja l'assigne
+        Utilisateur responsable = tache.getProjet().getResponsable();
+        boolean dejaPrevenu = tache.getAssigneA() != null
+                && tache.getAssigneA().getId().equals(responsable.getId());
+
+        if (!dejaPrevenu) {
+            notificationService.notifier(
+                    responsable,
+                    TypeNotification.COMMENTAIRE,
+                    texte,
+                    tache.getId(),
+                    tache.getProjet().getId());
+        }
+
+        return CommentaireDTO.depuis(enregistre);
     }
 
     /**

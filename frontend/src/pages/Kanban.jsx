@@ -191,6 +191,13 @@ export default function Kanban() {
 
         <div className="bandeau-actions">
           <Link
+            to={`/projets/${projetId}/calendrier`}
+            className="bouton bouton-discret"
+          >
+            Calendrier
+          </Link>
+
+          <Link
             to={`/projets/${projetId}/equipe`}
             className="bouton bouton-discret"
           >

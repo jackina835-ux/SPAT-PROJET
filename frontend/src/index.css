@@ -800,3 +800,304 @@ a { color: inherit; text-decoration: none; }
   .charge-chiffres { grid-template-columns: repeat(2, 1fr); }
   .charge-details  { grid-template-columns: 1fr; gap: 14px; }
 }
+
+/* ============================================================
+   Calendrier des echeances
+   ============================================================ */
+
+.calendrier-barre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.calendrier-mois {
+  font-size: 1.02rem;
+  min-width: 180px;
+  text-align: center;
+}
+
+.calendrier-aujourdhui { margin-left: auto; }
+
+.calendrier {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--bordure);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  overflow: hidden;
+}
+
+.calendrier-jour-entete {
+  background: var(--surface);
+  padding: 9px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+  text-align: center;
+}
+
+.calendrier-case {
+  background: var(--surface);
+  min-height: 104px;
+  padding: 6px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendrier-case-hors-mois { background: #faf9f6; }
+.calendrier-case-hors-mois .calendrier-numero { color: var(--bordure-forte); }
+
+.calendrier-case-aujourdhui {
+  background: var(--accent-clair);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.calendrier-numero {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+}
+.calendrier-case-aujourdhui .calendrier-numero {
+  color: var(--accent-fonce);
+}
+
+.calendrier-taches {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+/* ---- Puces de tache ---- */
+
+.puce-tache {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-family: inherit;
+  font-size: 0.73rem;
+  line-height: 1.25;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: filter 0.12s;
+}
+.puce-tache:hover { filter: brightness(0.94); }
+
+.puce-BASSE   { background: #eeedea; color: #5f5d56; border-left-color: #9d9b93; }
+.puce-MOYENNE { background: #e7eef5; color: #35526e; border-left-color: #3c7fb1; }
+.puce-HAUTE   { background: #fbeee0; color: #8a5720; border-left-color: #c9902f; }
+.puce-URGENTE { background: var(--alerte-clair); color: var(--alerte); border-left-color: var(--alerte); }
+
+.puce-terminee {
+  background: #e8f0e4;
+  color: #3f6b34;
+  border-left-color: #4f8f42;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.puce-retard { box-shadow: inset 0 0 0 1px var(--alerte); }
+
+/* ---- Legende ---- */
+
+.calendrier-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: var(--texte-doux);
+}
+.calendrier-legende span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.puce-legende {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border-left-width: 3px;
+  border-left-style: solid;
+  display: inline-block;
+}
+
+/* ---- Taches sans echeance ---- */
+
+.section-sans-echeance { margin-top: 24px; }
+
+.liste-puces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.liste-puces .puce-tache { width: auto; max-width: 260px; }
+
+@media (max-width: 760px) {
+  .calendrier-case { min-height: 74px; }
+  .puce-tache { font-size: 0.68rem; padding: 2px 4px; }
+  .calendrier-mois { min-width: 120px; font-size: 0.9rem; }
+}
+
+/* ============================================================
+   Notifications : cloche et panneau deroulant
+   ============================================================ */
+
+.cloche-conteneur { position: relative; }
+
+.cloche {
+  position: relative;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  color: var(--texte-doux);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cloche:hover {
+  background: var(--fond);
+  color: var(--texte);
+}
+
+.cloche-pastille {
+  position: absolute;
+  top: 3px; right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 20px;
+  background: var(--alerte);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border: 2px solid var(--surface);
+  box-sizing: content-box;
+}
+
+.cloche-panneau {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  box-shadow: 0 8px 26px rgba(30, 30, 25, 0.13);
+  z-index: 30;
+  overflow: hidden;
+  animation: apparition 0.12s ease-out;
+}
+
+.cloche-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--bordure);
+}
+.cloche-entete strong { font-size: 0.9rem; }
+
+.lien-discret {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.lien-discret:hover { text-decoration: underline; }
+
+.cloche-liste {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.cloche-vide {
+  padding: 26px 14px;
+  text-align: center;
+  color: var(--texte-doux);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.cloche-element {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--bordure);
+  padding: 11px 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.cloche-element:last-child { border-bottom: none; }
+.cloche-element:hover { background: var(--fond); }
+.cloche-element-neuf { background: var(--accent-clair); }
+.cloche-element-neuf:hover { background: #dbeee9; }
+
+.cloche-icone {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cloche-icone-ASSIGNATION       { background: var(--accent-clair); color: var(--accent-fonce); }
+.cloche-icone-DESASSIGNATION    { background: #eeedea; color: #66645c; }
+.cloche-icone-CHANGEMENT_STATUT { background: #e7eef5; color: #35526e; }
+.cloche-icone-COMMENTAIRE       { background: #fbeee0; color: #8a5720; }
+.cloche-icone-AJOUT_PROJET      { background: #e8f0e4; color: #3f6b34; }
+.cloche-icone-ECHEANCE_PROCHE   { background: var(--alerte-clair); color: var(--alerte); }
+
+.cloche-texte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cloche-message {
+  font-size: 0.83rem;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.cloche-point {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+@media (max-width: 480px) {
+  .cloche-panneau { width: calc(100vw - 24px); right: -8px; }
+  .entete-profil { display: none; }
+}

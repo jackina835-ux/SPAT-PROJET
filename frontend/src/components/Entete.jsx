@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Cloche from "./Cloche";
 
 const LIBELLE_ROLE = {
   ADMIN: "Administrateur",
@@ -28,10 +29,13 @@ export default function Entete() {
 
       {utilisateur && (
         <div className="entete-droite">
+          <Cloche />
+
           <div className="entete-profil">
             <strong>{utilisateur.nomComplet}</strong>
             <small>{LIBELLE_ROLE[utilisateur.role] || utilisateur.role}</small>
           </div>
+
           <button className="bouton bouton-discret" onClick={deconnexion}>
             Deconnexion
           </button>

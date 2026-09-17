@@ -29,6 +29,8 @@ public class TacheDTO {
     private Long tacheParentId;
     private int nombreSousTaches;
     private int nombreCommentaires;
+    private int nombrePiecesJointes;
+    private int minutesPassees;
 
     private boolean enRetard;
     private boolean bloquee;
@@ -100,6 +102,14 @@ public class TacheDTO {
 
     public int getNombreCommentaires() { return nombreCommentaires; }
     public void setNombreCommentaires(int nombreCommentaires) { this.nombreCommentaires = nombreCommentaires; }
+
+    public int getNombrePiecesJointes() { return nombrePiecesJointes; }
+    public void setNombrePiecesJointes(int nombrePiecesJointes) {
+        this.nombrePiecesJointes = nombrePiecesJointes;
+    }
+
+    public int getMinutesPassees() { return minutesPassees; }
+    public void setMinutesPassees(int minutesPassees) { this.minutesPassees = minutesPassees; }
 
     public boolean isEnRetard() { return enRetard; }
     public void setEnRetard(boolean enRetard) { this.enRetard = enRetard; }

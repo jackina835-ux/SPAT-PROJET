@@ -648,8 +648,17 @@ a { color: inherit; text-decoration: none; }
 .carte-tache-bas {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 11px;
+}
+
+.carte-tache-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--texte-doux);
+  font-size: 0.74rem;
 }
 
 .date-echeance {

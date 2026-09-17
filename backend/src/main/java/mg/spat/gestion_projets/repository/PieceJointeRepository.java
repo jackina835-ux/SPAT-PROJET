@@ -18,4 +18,13 @@ public interface PieceJointeRepository extends JpaRepository<PieceJointe, Long> 
     @Query("SELECT COALESCE(SUM(p.tailleOctets), 0) FROM PieceJointe p "
          + "WHERE p.tache.projet.id = :projetId")
     long totalOctetsParProjet(@Param("projetId") Long projetId);
+
+    /**
+     * Nombre de pieces jointes par tache, pour tout un projet en une
+     * seule requete (utilise par le Kanban, pour eviter un aller-retour
+     * en base par carte affichee).
+     */
+    @Query("SELECT p.tache.id, COUNT(p) FROM PieceJointe p "
+         + "WHERE p.tache.projet.id = :projetId GROUP BY p.tache.id")
+    List<Object[]> compterParTachePourProjet(@Param("projetId") Long projetId);
 }

@@ -42,4 +42,13 @@ public interface SuiviTempsRepository extends JpaRepository<SuiviTemps, Long> {
     @Query("SELECT s FROM SuiviTemps s WHERE s.tache.projet.id = :projetId "
          + "ORDER BY s.dateTravail DESC")
     List<SuiviTemps> findByProjetId(@Param("projetId") Long projetId);
+
+    /**
+     * Minutes passees par tache, pour tout un projet en une seule
+     * requete (utilise par le Kanban, pour eviter un aller-retour en
+     * base par carte affichee).
+     */
+    @Query("SELECT s.tache.id, SUM(s.dureeMinutes) FROM SuiviTemps s "
+         + "WHERE s.tache.projet.id = :projetId GROUP BY s.tache.id")
+    List<Object[]> sommeMinutesParTachePourProjet(@Param("projetId") Long projetId);
 }

@@ -31,6 +31,40 @@ function formaterDate(valeur) {
   });
 }
 
+/** "45min", "2h", "2h30" : compact pour tenir sur une carte. */
+function formaterDuree(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${String(m).padStart(2, "0")}`;
+}
+
+function IconeHorloge() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  );
+}
+
+function IconeTrombone() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5 12.4 20a4.2 4.2 0 0 1-6-6L14.8 5.7a2.8 2.8 0 0 1 4 4l-8.4 8.3a1.4 1.4 0 0 1-2-2l7.7-7.6" />
+    </svg>
+  );
+}
+
+function IconeBulle() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20l1.1-4.4A8.5 8.5 0 1 1 21 11.5Z" />
+    </svg>
+  );
+}
+
 function IconeCalendrier() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -600,9 +634,33 @@ export default function Kanban() {
                                   </span>
                                 )}
 
+                                {tache.minutesPassees > 0 && (
+                                  <span
+                                    className="carte-tache-meta"
+                                    title={`${formaterDuree(tache.minutesPassees)} passees sur cette tache`}
+                                  >
+                                    <IconeHorloge />
+                                    {formaterDuree(tache.minutesPassees)}
+                                  </span>
+                                )}
+
+                                {tache.nombrePiecesJointes > 0 && (
+                                  <span
+                                    className="carte-tache-meta"
+                                    title={`${tache.nombrePiecesJointes} piece(s) jointe(s)`}
+                                  >
+                                    <IconeTrombone />
+                                    {tache.nombrePiecesJointes}
+                                  </span>
+                                )}
+
                                 {tache.nombreCommentaires > 0 && (
-                                  <span className="texte-discret petit">
-                                    {tache.nombreCommentaires} com.
+                                  <span
+                                    className="carte-tache-meta"
+                                    title={`${tache.nombreCommentaires} commentaire(s)`}
+                                  >
+                                    <IconeBulle />
+                                    {tache.nombreCommentaires}
                                   </span>
                                 )}
                               </div>

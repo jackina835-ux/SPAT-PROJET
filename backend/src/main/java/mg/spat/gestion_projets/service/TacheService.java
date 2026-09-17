@@ -6,13 +6,16 @@ import mg.spat.gestion_projets.dto.TacheDTO;
 import mg.spat.gestion_projets.entity.*;
 import mg.spat.gestion_projets.exception.RegleMetierException;
 import mg.spat.gestion_projets.exception.RessourceIntrouvableException;
+import mg.spat.gestion_projets.repository.PieceJointeRepository;
 import mg.spat.gestion_projets.repository.ProjetRepository;
+import mg.spat.gestion_projets.repository.SuiviTempsRepository;
 import mg.spat.gestion_projets.repository.TacheRepository;
 import mg.spat.gestion_projets.repository.UtilisateurRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +32,21 @@ public class TacheService {
     private final ProjetRepository projetRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final NotificationService notificationService;
+    private final SuiviTempsRepository suiviTempsRepository;
+    private final PieceJointeRepository pieceJointeRepository;
 
     public TacheService(TacheRepository tacheRepository,
                         ProjetRepository projetRepository,
                         UtilisateurRepository utilisateurRepository,
-                        NotificationService notificationService) {
+                        NotificationService notificationService,
+                        SuiviTempsRepository suiviTempsRepository,
+                        PieceJointeRepository pieceJointeRepository) {
         this.tacheRepository = tacheRepository;
         this.projetRepository = projetRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.notificationService = notificationService;
+        this.suiviTempsRepository = suiviTempsRepository;
+        this.pieceJointeRepository = pieceJointeRepository;
     }
 
     @Transactional(readOnly = true)
@@ -86,13 +95,29 @@ public class TacheService {
 
         List<Tache> taches = tacheRepository.findByProjetId(projetId);
 
+        // Un seul aller-retour en base pour chacun, plutot qu'un par
+        // carte affichee sur le tableau.
+        Map<Long, Integer> minutesParTache = new HashMap<>();
+        for (Object[] ligne : suiviTempsRepository.sommeMinutesParTachePourProjet(projetId)) {
+            minutesParTache.put((Long) ligne[0], ((Number) ligne[1]).intValue());
+        }
+        Map<Long, Integer> piecesJointesParTache = new HashMap<>();
+        for (Object[] ligne : pieceJointeRepository.compterParTachePourProjet(projetId)) {
+            piecesJointesParTache.put((Long) ligne[0], ((Number) ligne[1]).intValue());
+        }
+
         Map<String, List<TacheDTO>> colonnes = new LinkedHashMap<>();
         Map<String, Long> compteurs = new LinkedHashMap<>();
 
         for (StatutTache statut : StatutTache.values()) {
             List<TacheDTO> contenu = taches.stream()
                     .filter(t -> t.getStatut() == statut)
-                    .map(TacheDTO::depuis)
+                    .map(t -> {
+                        TacheDTO dto = TacheDTO.depuis(t);
+                        dto.setMinutesPassees(minutesParTache.getOrDefault(t.getId(), 0));
+                        dto.setNombrePiecesJointes(piecesJointesParTache.getOrDefault(t.getId(), 0));
+                        return dto;
+                    })
                     .collect(Collectors.toList());
             colonnes.put(statut.name(), contenu);
             compteurs.put(statut.name(), (long) contenu.size());

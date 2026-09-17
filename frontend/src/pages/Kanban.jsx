@@ -614,11 +614,14 @@ export default function Kanban() {
                     {fourni.placeholder}
 
                     {(colonnesFiltrees[colonne.cle] || []).length === 0 && (
-                      <div className="colonne-vide">
-                        {filtresActifs &&
-                        (kanban.colonnes[colonne.cle] || []).length > 0
-                          ? "Aucun resultat"
-                          : "Aucune tache"}
+                      <div className="colonne-vide etat-vide-carte">
+                        <span className="etat-vide-icone">✓</span>
+                        <p>
+                          {filtresActifs &&
+                          (kanban.colonnes[colonne.cle] || []).length > 0
+                            ? "Aucun resultat"
+                            : "Aucune tache"}
+                        </p>
                       </div>
                     )}
                   </div>

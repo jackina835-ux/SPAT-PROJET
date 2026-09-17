@@ -599,11 +599,18 @@ a { color: inherit; text-decoration: none; }
 
 .colonne-contenu { display: flex; flex-direction: column; gap: 9px; }
 
-.colonne-vide {
-  text-align: center;
-  color: var(--texte-doux);
-  font-size: 0.8rem;
-  padding: 18px 0;
+.colonne-vide.etat-vide-carte {
+  padding: 18px 12px;
+  gap: 6px;
+}
+.colonne-vide .etat-vide-icone {
+  width: 24px;
+  height: 24px;
+  font-size: 0.7rem;
+}
+.colonne-vide p {
+  margin: 0;
+  font-size: 0.78rem;
 }
 
 .carte-tache {

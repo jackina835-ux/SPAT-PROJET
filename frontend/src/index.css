@@ -1284,3 +1284,91 @@ a { color: inherit; text-decoration: none; }
   margin: 0;
 }
 .bouton-fichier input { display: none; }
+
+/* ============================================================
+   Dependances entre taches
+   ============================================================ */
+
+.etiquette-bloquee {
+  background: #f3e8e6;
+  color: #8a4034;
+}
+
+.bandeau-bloquee {
+  background: #fbeee0;
+  border: 1px solid #f0dcc0;
+  border-left: 3px solid #c9902f;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: #7d5418;
+  margin-bottom: 16px;
+}
+
+.etiquette-groupe {
+  font-weight: 600;
+  margin: 14px 0 7px;
+}
+.etiquette-groupe:first-of-type { margin-top: 0; }
+
+.liste-dependances {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.dep {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.86rem;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--bordure);
+}
+.dep-ok      { background: #f4f8f2; border-color: #dde8d8; }
+.dep-attente { background: #fdf7ef; border-color: #f0e2cc; }
+
+.dep-supprimer {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.dep:hover .dep-supprimer { opacity: 1; }
+
+/* ---- Choix d'une tache a lier ---- */
+
+.liste-candidates {
+  display: grid;
+  gap: 5px;
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 14px;
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-family: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.candidate:hover {
+  border-color: var(--accent);
+  background: var(--accent-clair);
+}

@@ -3,6 +3,7 @@ import * as apiTaches from "../api/taches";
 import * as apiCommentaires from "../api/commentaires";
 import * as apiTemps from "../api/temps";
 import * as apiPieces from "../api/pieces";
+import * as apiDependances from "../api/dependances";
 import { messageErreur } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { estAdmin, estResponsable } from "../utils/droits";
@@ -76,6 +77,10 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
   const [brouillon, setBrouillon] = useState("");
   const [envoi, setEnvoi] = useState(false);
 
+  const [dependances, setDependances] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [ajoutOuvert, setAjoutOuvert] = useState(false);
+
   const [pieces, setPieces] = useState([]);
   const [envoiFichier, setEnvoiFichier] = useState(false);
   const [progression, setProgression] = useState(0);
@@ -98,12 +103,13 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
     async function charger() {
       setChargement(true);
       try {
-        const [rTache, rSous, rComm, rTemps, rPieces] = await Promise.all([
+        const [rTache, rSous, rComm, rTemps, rPieces, rDep] = await Promise.all([
           apiTaches.consulterTache(tacheId),
           apiTaches.listerSousTaches(tacheId),
           apiCommentaires.listerCommentaires(tacheId),
           apiTemps.recapTache(tacheId),
           apiPieces.listerPieces(tacheId),
+          apiDependances.consulterDependances(tacheId),
         ]);
         if (annule) return;
         setTache(rTache.data);
@@ -111,6 +117,7 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
         setCommentaires(rComm.data);
         setRecap(rTemps.data);
         setPieces(rPieces.data);
+        setDependances(rDep.data);
         setErreur("");
       } catch (e) {
         if (!annule) setErreur(messageErreur(e, "Impossible de charger la tache"));
@@ -166,6 +173,49 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
     try {
       await apiCommentaires.supprimerCommentaire(id);
       await rechargerCommentaires();
+      onChangement?.();
+    } catch (e) {
+      setErreur(messageErreur(e, "Suppression impossible"));
+    }
+  }
+
+  async function ouvrirAjoutDependance() {
+    const nouvelEtat = !ajoutOuvert;
+    setAjoutOuvert(nouvelEtat);
+
+    if (nouvelEtat) {
+      try {
+        const { data } = await apiDependances.listerCandidates(tacheId);
+        setCandidates(data);
+      } catch (e) {
+        setErreur(messageErreur(e, "Impossible de lister les taches"));
+        setCandidates([]);
+      }
+    }
+  }
+
+  async function ajouterDependance(dependDeId) {
+    try {
+      const { data } = await apiDependances.ajouterDependance(
+        tacheId,
+        dependDeId
+      );
+      setDependances(data);
+      setAjoutOuvert(false);
+      onChangement?.();
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Ajout impossible"));
+    }
+  }
+
+  async function retirerDependance(dependDeId) {
+    try {
+      const { data } = await apiDependances.retirerDependance(
+        tacheId,
+        dependDeId
+      );
+      setDependances(data);
       onChangement?.();
     } catch (e) {
       setErreur(messageErreur(e, "Suppression impossible"));
@@ -306,6 +356,16 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
 
             <h2 className="panneau-titre">{tache.titre}</h2>
 
+            {dependances?.estBloquee && (
+              <div className="bandeau-bloquee">
+                Cette tache est bloquee : {dependances.nonTerminees} tache
+                {dependances.nonTerminees > 1 ? "s" : ""} doi
+                {dependances.nonTerminees > 1 ? "vent" : "t"} etre terminee
+                {dependances.nonTerminees > 1 ? "s" : ""} avant qu'elle puisse
+                avancer.
+              </div>
+            )}
+
             {tache.description ? (
               <p className="panneau-description">{tache.description}</p>
             ) : (
@@ -362,6 +422,90 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
                 </ul>
               </section>
             )}
+
+            <section className="panneau-section">
+              <h3 className="panneau-sous-titre">
+                Dependances
+                {gestionnaire && (
+                  <button
+                    className="lien-discret temps-ajouter"
+                    onClick={ouvrirAjoutDependance}
+                  >
+                    {ajoutOuvert ? "Annuler" : "Ajouter"}
+                  </button>
+                )}
+              </h3>
+
+              {ajoutOuvert && (
+                <div className="liste-candidates">
+                  {candidates.length === 0 ? (
+                    <p className="texte-discret petit">
+                      Aucune tache disponible. Les taches deja liees et celles
+                      qui creeraient un cycle sont exclues.
+                    </p>
+                  ) : (
+                    candidates.map((c) => (
+                      <button
+                        key={c.id}
+                        className="candidate"
+                        onClick={() => ajouterDependance(c.id)}
+                      >
+                        <span className={`point point-${c.statut}`} />
+                        {c.titre}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              <p className="texte-discret petit etiquette-groupe">
+                Cette tache attend
+              </p>
+              {!dependances || dependances.dependances.length === 0 ? (
+                <p className="texte-discret petit">Rien. Elle peut avancer.</p>
+              ) : (
+                <ul className="liste-dependances">
+                  {dependances.dependances.map((d) => (
+                    <li
+                      key={d.id}
+                      className={d.terminee ? "dep dep-ok" : "dep dep-attente"}
+                    >
+                      <span className={`point point-${d.statut}`} />
+                      <span
+                        className={d.terminee ? "texte-barre" : undefined}
+                      >
+                        {d.titre}
+                      </span>
+                      {gestionnaire && (
+                        <button
+                          className="bouton-icone dep-supprimer"
+                          title="Retirer cette dependance"
+                          onClick={() => retirerDependance(d.id)}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {dependances && dependances.bloque.length > 0 && (
+                <>
+                  <p className="texte-discret petit etiquette-groupe">
+                    Taches qui attendent celle-ci
+                  </p>
+                  <ul className="liste-dependances">
+                    {dependances.bloque.map((b) => (
+                      <li key={b.id} className="dep">
+                        <span className={`point point-${b.statut}`} />
+                        <span>{b.titre}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
 
             <section className="panneau-section">
               <h3 className="panneau-sous-titre">

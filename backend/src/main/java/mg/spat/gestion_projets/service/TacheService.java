@@ -196,6 +196,21 @@ public class TacheService {
             }
         }
 
+        // Une tache bloquee ne peut pas quitter la colonne "A faire".
+        // Revenir en arriere reste toujours possible : on ne piege
+        // jamais quelqu'un dans une colonne.
+        if (nouveauStatut != StatutTache.A_FAIRE) {
+            List<Tache> attendues = tache.dependancesNonTerminees();
+            if (!attendues.isEmpty()) {
+                String liste = attendues.stream()
+                        .map(Tache::getTitre)
+                        .collect(Collectors.joining(", "));
+                throw new RegleMetierException(
+                        "Cette tache attend : " + liste
+                      + ". Terminez-la ou les d'abord.");
+            }
+        }
+
         tache.changerStatut(nouveauStatut);
         Tache enregistree = tacheRepository.save(tache);
 

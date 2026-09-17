@@ -363,6 +363,14 @@ export default function Kanban() {
                                 >
                                   {LIBELLE_PRIORITE[tache.priorite]}
                                 </span>
+                                {tache.bloquee && (
+                                  <span
+                                    className="etiquette etiquette-bloquee"
+                                    title={`Attend ${tache.dependancesOuvertes} tache(s)`}
+                                  >
+                                    Bloquee
+                                  </span>
+                                )}
                                 {gestionnaire && (
                                   <button
                                     type="button"

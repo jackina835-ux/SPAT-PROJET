@@ -31,6 +31,8 @@ public class TacheDTO {
     private int nombreCommentaires;
 
     private boolean enRetard;
+    private boolean bloquee;
+    private int dependancesOuvertes;
 
     public TacheDTO() {
     }
@@ -52,6 +54,8 @@ public class TacheDTO {
         dto.nombreSousTaches = t.getSousTaches() == null ? 0 : t.getSousTaches().size();
         dto.nombreCommentaires = t.getCommentaires() == null ? 0 : t.getCommentaires().size();
         dto.enRetard = t.estEnRetard();
+        dto.dependancesOuvertes = t.dependancesNonTerminees().size();
+        dto.bloquee = dto.dependancesOuvertes > 0;
         return dto;
     }
 
@@ -99,4 +103,12 @@ public class TacheDTO {
 
     public boolean isEnRetard() { return enRetard; }
     public void setEnRetard(boolean enRetard) { this.enRetard = enRetard; }
+
+    public boolean isBloquee() { return bloquee; }
+    public void setBloquee(boolean bloquee) { this.bloquee = bloquee; }
+
+    public int getDependancesOuvertes() { return dependancesOuvertes; }
+    public void setDependancesOuvertes(int dependancesOuvertes) {
+        this.dependancesOuvertes = dependancesOuvertes;
+    }
 }

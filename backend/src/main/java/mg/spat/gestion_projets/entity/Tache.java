@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tache")
@@ -52,6 +54,26 @@ public class Tache {
     @OneToMany(mappedBy = "tache", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Commentaire> commentaires = new ArrayList<>();
 
+    /**
+     * Taches qui doivent etre terminees avant que celle-ci
+     * puisse avancer.
+     */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "dependance_tache",
+        joinColumns = @JoinColumn(name = "tache_id"),
+        inverseJoinColumns = @JoinColumn(name = "depend_de_id")
+    )
+    private Set<Tache> dependances = new HashSet<>();
+
+    /**
+     * L'autre sens de la meme relation : les taches qui
+     * attendent celle-ci. Aucune table supplementaire,
+     * c'est la meme lue a l'envers.
+     */
+    @ManyToMany(mappedBy = "dependances", fetch = FetchType.LAZY)
+    private Set<Tache> bloque = new HashSet<>();
+
     @Column(name = "date_creation", nullable = false)
     private LocalDateTime dateCreation = LocalDateTime.now();
 
@@ -94,6 +116,12 @@ public class Tache {
     public List<Commentaire> getCommentaires() { return commentaires; }
     public void setCommentaires(List<Commentaire> commentaires) { this.commentaires = commentaires; }
 
+    public Set<Tache> getDependances() { return dependances; }
+    public void setDependances(Set<Tache> dependances) { this.dependances = dependances; }
+
+    public Set<Tache> getBloque() { return bloque; }
+    public void setBloque(Set<Tache> bloque) { this.bloque = bloque; }
+
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
@@ -109,5 +137,17 @@ public class Tache {
 
     public void changerStatut(StatutTache nouveauStatut) {
         this.statut = nouveauStatut;
+    }
+
+    /** Dependances qui ne sont pas encore terminees. */
+    public List<Tache> dependancesNonTerminees() {
+        return dependances.stream()
+                .filter(d -> d.getStatut() != StatutTache.TERMINEE)
+                .toList();
+    }
+
+    /** Vrai si au moins une dependance reste ouverte. */
+    public boolean estBloquee() {
+        return !dependancesNonTerminees().isEmpty();
     }
 }

@@ -77,6 +77,10 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
   const [brouillon, setBrouillon] = useState("");
   const [envoi, setEnvoi] = useState(false);
 
+  const [edition, setEdition] = useState(false);
+  const [formulaire, setFormulaire] = useState(null);
+  const [enregistrement, setEnregistrement] = useState(false);
+
   const [dependances, setDependances] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [ajoutOuvert, setAjoutOuvert] = useState(false);
@@ -316,6 +320,47 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
     }
   }
 
+  function ouvrirEdition() {
+    setFormulaire({
+      titre: tache.titre,
+      description: tache.description || "",
+      priorite: tache.priorite,
+      statut: tache.statut,
+      dateEcheance: tache.dateEcheance || "",
+      chargeEstimee: tache.chargeEstimee ?? "",
+      assigneAId: tache.assigneA ? String(tache.assigneA.id) : "",
+    });
+    setEdition(true);
+  }
+
+  async function enregistrerModification(evenement) {
+    evenement.preventDefault();
+    setEnregistrement(true);
+    try {
+      const { data } = await apiTaches.modifierTache(tacheId, {
+        titre: formulaire.titre,
+        description: formulaire.description || null,
+        priorite: formulaire.priorite,
+        statut: formulaire.statut,
+        dateEcheance: formulaire.dateEcheance || null,
+        chargeEstimee: formulaire.chargeEstimee
+          ? Number(formulaire.chargeEstimee)
+          : null,
+        projetId: tache.projetId,
+        assigneAId: formulaire.assigneAId ? Number(formulaire.assigneAId) : null,
+        tacheParentId: tache.tacheParentId,
+      });
+      setTache(data);
+      setEdition(false);
+      onChangement?.();
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Modification impossible"));
+    } finally {
+      setEnregistrement(false);
+    }
+  }
+
   function peutSupprimerCommentaire(commentaire) {
     return (
       estAdmin(utilisateur) ||
@@ -331,15 +376,147 @@ export default function PanneauTache({ tacheId, projet, onFermer, onChangement }
       <aside className="panneau" role="dialog" aria-modal="true">
         <header className="panneau-entete">
           <span className="panneau-titre-petit">Detail de la tache</span>
-          <button className="bouton-icone" onClick={onFermer} title="Fermer">
-            ×
-          </button>
+          <div className="panneau-entete-actions">
+            {gestionnaire && tache && !edition && (
+              <button
+                className="lien-discret"
+                onClick={ouvrirEdition}
+                title="Modifier la tache"
+              >
+                Modifier
+              </button>
+            )}
+            <button className="bouton-icone" onClick={onFermer} title="Fermer">
+              ×
+            </button>
+          </div>
         </header>
 
         {chargement ? (
           <div className="etat-vide">Chargement…</div>
         ) : !tache ? (
           <div className="alerte">{erreur || "Tache introuvable"}</div>
+        ) : edition ? (
+          <div className="panneau-corps">
+            <h2 className="panneau-titre">Modifier la tache</h2>
+
+            {erreur && <div className="alerte">{erreur}</div>}
+
+            <form className="carte formulaire" onSubmit={enregistrerModification}>
+              <label className="champ">
+                <span>Titre</span>
+                <input
+                  value={formulaire.titre}
+                  onChange={(e) =>
+                    setFormulaire({ ...formulaire, titre: e.target.value })
+                  }
+                  required
+                />
+              </label>
+
+              <label className="champ">
+                <span>Description</span>
+                <textarea
+                  rows="3"
+                  value={formulaire.description}
+                  onChange={(e) =>
+                    setFormulaire({ ...formulaire, description: e.target.value })
+                  }
+                />
+              </label>
+
+              <div className="ligne-champs">
+                <label className="champ">
+                  <span>Priorite</span>
+                  <select
+                    value={formulaire.priorite}
+                    onChange={(e) =>
+                      setFormulaire({ ...formulaire, priorite: e.target.value })
+                    }
+                  >
+                    <option value="BASSE">Basse</option>
+                    <option value="MOYENNE">Moyenne</option>
+                    <option value="HAUTE">Haute</option>
+                    <option value="URGENTE">Urgente</option>
+                  </select>
+                </label>
+
+                <label className="champ">
+                  <span>Statut</span>
+                  <select
+                    value={formulaire.statut}
+                    onChange={(e) =>
+                      setFormulaire({ ...formulaire, statut: e.target.value })
+                    }
+                  >
+                    <option value="A_FAIRE">A faire</option>
+                    <option value="EN_COURS">En cours</option>
+                    <option value="EN_REVISION">En revision</option>
+                    <option value="TERMINEE">Terminee</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="ligne-champs">
+                <label className="champ">
+                  <span>Echeance</span>
+                  <input
+                    type="date"
+                    value={formulaire.dateEcheance}
+                    onChange={(e) =>
+                      setFormulaire({ ...formulaire, dateEcheance: e.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="champ">
+                  <span>Charge estimee (h)</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formulaire.chargeEstimee}
+                    onChange={(e) =>
+                      setFormulaire({ ...formulaire, chargeEstimee: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+
+              <label className="champ">
+                <span>Assignee a</span>
+                <select
+                  value={formulaire.assigneAId}
+                  onChange={(e) =>
+                    setFormulaire({ ...formulaire, assigneAId: e.target.value })
+                  }
+                >
+                  <option value="">Personne</option>
+                  {projet?.membres.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nomComplet}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="ligne-champs">
+                <button
+                  type="button"
+                  className="bouton bouton-discret"
+                  onClick={() => setEdition(false)}
+                  disabled={enregistrement}
+                >
+                  Annuler
+                </button>
+                <button
+                  className="bouton bouton-principal"
+                  disabled={enregistrement}
+                >
+                  {enregistrement ? "Enregistrement…" : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
         ) : (
           <div className="panneau-corps">
             <div className="panneau-etiquettes">

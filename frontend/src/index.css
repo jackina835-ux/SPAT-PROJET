@@ -197,6 +197,16 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 16px;
 }
 
+.succes {
+  background: #e8f0e4;
+  border: 1px solid #c9dcc0;
+  color: #3f6b34;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.87rem;
+  margin-bottom: 16px;
+}
+
 /* ---------------- Page de connexion ---------------- */
 
 .page-connexion {
@@ -522,6 +532,12 @@ a { color: inherit; text-decoration: none; }
   padding: 14px 20px;
   border-bottom: 1px solid var(--bordure);
   flex-shrink: 0;
+}
+
+.panneau-entete-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .panneau-titre-petit {
@@ -1372,3 +1388,4 @@ a { color: inherit; text-decoration: none; }
   border-color: var(--accent);
   background: var(--accent-clair);
 }
+

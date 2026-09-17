@@ -41,12 +41,47 @@ function construireGrille(annee, mois) {
   return cases;
 }
 
+/** Les 7 jours (lundi a dimanche) de la semaine contenant "date". */
+function construireSemaine(date) {
+  const decalage = (date.getDay() + 6) % 7;
+  const debut = new Date(date);
+  debut.setDate(date.getDate() - decalage);
+
+  const jours = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(debut);
+    d.setDate(debut.getDate() + i);
+    jours.push(d);
+  }
+  return jours;
+}
+
+/** "15 - 21 septembre 2026", ou "29 sept. - 5 oct. 2026" si a cheval. */
+function libelleSemaine(jours) {
+  const debut = jours[0];
+  const fin = jours[6];
+  const memeMois = debut.getMonth() === fin.getMonth();
+  const memeAnnee = debut.getFullYear() === fin.getFullYear();
+
+  if (memeMois && memeAnnee) {
+    return `${debut.getDate()} - ${fin.getDate()} ${MOIS[debut.getMonth()].toLowerCase()} ${debut.getFullYear()}`;
+  }
+  const moisDebut = MOIS[debut.getMonth()].slice(0, 4).toLowerCase();
+  const moisFin = MOIS[fin.getMonth()].slice(0, 4).toLowerCase();
+  if (memeAnnee) {
+    return `${debut.getDate()} ${moisDebut}. - ${fin.getDate()} ${moisFin}. ${fin.getFullYear()}`;
+  }
+  return `${debut.getDate()} ${moisDebut}. ${debut.getFullYear()} - ${fin.getDate()} ${moisFin}. ${fin.getFullYear()}`;
+}
+
 export default function Calendrier() {
   const { projetId } = useParams();
 
   const aujourdhui = new Date();
+  const [vue, setVue] = useState("mois");
   const [annee, setAnnee] = useState(aujourdhui.getFullYear());
   const [mois, setMois] = useState(aujourdhui.getMonth());
+  const [semaineReference, setSemaineReference] = useState(aujourdhui);
 
   const [taches, setTaches] = useState([]);
   const [projet, setProjet] = useState(null);
@@ -87,6 +122,10 @@ export default function Calendrier() {
   }, [taches]);
 
   const grille = useMemo(() => construireGrille(annee, mois), [annee, mois]);
+  const grilleSemaine = useMemo(
+    () => construireSemaine(semaineReference),
+    [semaineReference]
+  );
 
   const sansEcheance = taches.filter((t) => !t.dateEcheance);
   const cleAujourdhui = cle(aujourdhui);
@@ -109,9 +148,22 @@ export default function Calendrier() {
     }
   }
 
+  function semainePrecedente() {
+    const d = new Date(semaineReference);
+    d.setDate(d.getDate() - 7);
+    setSemaineReference(d);
+  }
+
+  function semaineSuivante() {
+    const d = new Date(semaineReference);
+    d.setDate(d.getDate() + 7);
+    setSemaineReference(d);
+  }
+
   function revenirAujourdhui() {
     setAnnee(aujourdhui.getFullYear());
     setMois(aujourdhui.getMonth());
+    setSemaineReference(aujourdhui);
   }
 
   // Compte des echeances tombant dans le mois affiche
@@ -120,6 +172,12 @@ export default function Calendrier() {
     const d = new Date(t.dateEcheance);
     return d.getFullYear() === annee && d.getMonth() === mois;
   }).length;
+
+  // Compte des echeances tombant dans la semaine affichee
+  const clesDeLaSemaine = new Set(grilleSemaine.map(cle));
+  const echeancesDeLaSemaine = taches.filter(
+    (t) => t.dateEcheance && clesDeLaSemaine.has(t.dateEcheance)
+  ).length;
 
   if (chargement) {
     return <div className="etat-vide">Chargement du calendrier…</div>;
@@ -141,8 +199,17 @@ export default function Calendrier() {
         <div>
           <h1>Calendrier des echeances</h1>
           <p className="texte-discret">
-            {echeancesDuMois} echeance{echeancesDuMois > 1 ? "s" : ""} en{" "}
-            {MOIS[mois].toLowerCase()} {annee}
+            {vue === "mois" ? (
+              <>
+                {echeancesDuMois} echeance{echeancesDuMois > 1 ? "s" : ""} en{" "}
+                {MOIS[mois].toLowerCase()} {annee}
+              </>
+            ) : (
+              <>
+                {echeancesDeLaSemaine} echeance
+                {echeancesDeLaSemaine > 1 ? "s" : ""} cette semaine
+              </>
+            )}
           </p>
         </div>
 
@@ -158,33 +225,77 @@ export default function Calendrier() {
 
       {erreur && <div className="alerte">{erreur}</div>}
 
-      <div className="carte calendrier-carte">
-        <div className="calendrier-barre">
-          <button
-            className="bouton-icone calendrier-fleche"
-            onClick={moisPrecedent}
-            title="Mois precedent"
-          >
-            ‹
-          </button>
-          <strong className="calendrier-mois">
-            {MOIS[mois]} {annee}
-          </strong>
-          <button
-            className="bouton-icone calendrier-fleche"
-            onClick={moisSuivant}
-            title="Mois suivant"
-          >
-            ›
-          </button>
-          <button
-            className="bouton bouton-discret calendrier-aujourdhui"
-            onClick={revenirAujourdhui}
-          >
-            Aujourd'hui
-          </button>
-        </div>
+      <div className="calendrier-vues">
+        <button
+          className={"onglet" + (vue === "mois" ? " onglet-actif" : "")}
+          onClick={() => setVue("mois")}
+        >
+          Mois
+        </button>
+        <button
+          className={"onglet" + (vue === "semaine" ? " onglet-actif" : "")}
+          onClick={() => setVue("semaine")}
+        >
+          Semaine
+        </button>
+      </div>
 
+      <div className="carte calendrier-carte">
+        {vue === "mois" ? (
+          <div className="calendrier-barre">
+            <button
+              className="bouton-icone calendrier-fleche"
+              onClick={moisPrecedent}
+              title="Mois precedent"
+            >
+              ‹
+            </button>
+            <strong className="calendrier-mois">
+              {MOIS[mois]} {annee}
+            </strong>
+            <button
+              className="bouton-icone calendrier-fleche"
+              onClick={moisSuivant}
+              title="Mois suivant"
+            >
+              ›
+            </button>
+            <button
+              className="bouton bouton-discret calendrier-aujourdhui"
+              onClick={revenirAujourdhui}
+            >
+              Aujourd'hui
+            </button>
+          </div>
+        ) : (
+          <div className="calendrier-barre">
+            <button
+              className="bouton-icone calendrier-fleche"
+              onClick={semainePrecedente}
+              title="Semaine precedente"
+            >
+              ‹
+            </button>
+            <strong className="calendrier-mois">
+              {libelleSemaine(grilleSemaine)}
+            </strong>
+            <button
+              className="bouton-icone calendrier-fleche"
+              onClick={semaineSuivante}
+              title="Semaine suivante"
+            >
+              ›
+            </button>
+            <button
+              className="bouton bouton-discret calendrier-aujourdhui"
+              onClick={revenirAujourdhui}
+            >
+              Aujourd'hui
+            </button>
+          </div>
+        )}
+
+        {vue === "mois" ? (
         <div className="calendrier">
           {JOURS.map((jour, index) => (
             <div
@@ -254,6 +365,80 @@ export default function Calendrier() {
             );
           })}
         </div>
+        ) : (
+        <div className="calendrier calendrier-semaine">
+          {grilleSemaine.map((date, index) => (
+            <div
+              key={cle(date)}
+              className={
+                "calendrier-jour-entete" +
+                (index >= 5 ? " calendrier-jour-weekend" : "")
+              }
+            >
+              {JOURS[index]}{" "}
+              <span
+                className={
+                  "calendrier-numero" +
+                  (cle(date) === cleAujourdhui
+                    ? " calendrier-numero-aujourdhui"
+                    : "")
+                }
+              >
+                {date.getDate()}
+              </span>
+            </div>
+          ))}
+
+          {grilleSemaine.map((date, index) => {
+            const cleJour = cle(date);
+            const estAujourdhui = cleJour === cleAujourdhui;
+            const estWeekend = index >= 5;
+            const duJour = parDate[cleJour] || [];
+
+            return (
+              <div
+                key={cleJour}
+                className={
+                  "calendrier-case calendrier-case-semaine" +
+                  (estWeekend ? " calendrier-case-weekend" : "") +
+                  (estAujourdhui ? " calendrier-case-aujourdhui" : "")
+                }
+              >
+                <div className="calendrier-taches">
+                  {duJour.length === 0 ? (
+                    <span className="texte-discret petit calendrier-jour-vide">
+                      Rien
+                    </span>
+                  ) : (
+                    duJour.map((tache) => (
+                      <button
+                        key={tache.id}
+                        className={
+                          "puce-tache" +
+                          ` puce-${tache.priorite}` +
+                          (tache.statut === "TERMINEE"
+                            ? " puce-terminee"
+                            : "") +
+                          (tache.enRetard ? " puce-retard" : "")
+                        }
+                        onClick={() => setTacheOuverte(tache.id)}
+                        title={
+                          tache.titre +
+                          (tache.assigneA
+                            ? ` — ${tache.assigneA.nomComplet}`
+                            : "")
+                        }
+                      >
+                        {tache.titre}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        )}
 
         <div className="calendrier-legende">
           <span><i className="puce-legende puce-URGENTE" /> Urgente</span>

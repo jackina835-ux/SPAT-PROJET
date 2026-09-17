@@ -75,6 +75,7 @@ export default function Kanban() {
   const [recherche, setRecherche] = useState("");
   const [filtrePriorite, setFiltrePriorite] = useState("");
   const [filtreAssigneId, setFiltreAssigneId] = useState("");
+  const [colonneMobile, setColonneMobile] = useState(COLONNES[0].cle);
 
   const gestionnaire = peutGererTaches(utilisateur, projet);
   const gestionnaireProjet = peutGererProjet(utilisateur, projet);
@@ -456,13 +457,38 @@ export default function Kanban() {
         </form>
       )}
 
+      <div className="selecteur-colonnes-mobile">
+        {COLONNES.map((colonne) => (
+          <button
+            key={colonne.cle}
+            className={
+              "onglet-colonne" +
+              (colonne.cle === colonneMobile ? " onglet-colonne-actif" : "")
+            }
+            onClick={() => setColonneMobile(colonne.cle)}
+          >
+            <span className={`point point-${colonne.cle}`} />
+            {colonne.libelle}
+            <span className="compteur">
+              {(colonnesFiltrees[colonne.cle] || []).length}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <DragDropContext onDragEnd={surFinDeplacement}>
         <div className="tableau-kanban">
           {COLONNES.map((colonne) => (
             <Droppable droppableId={colonne.cle} key={colonne.cle}>
               {(fourni, etat) => (
                 <div
-                  className={`colonne ${etat.isDraggingOver ? "colonne-survolee" : ""}`}
+                  className={
+                    "colonne" +
+                    (etat.isDraggingOver ? " colonne-survolee" : "") +
+                    (colonne.cle !== colonneMobile
+                      ? " colonne-cachee-mobile"
+                      : "")
+                  }
                   ref={fourni.innerRef}
                   {...fourni.droppableProps}
                 >

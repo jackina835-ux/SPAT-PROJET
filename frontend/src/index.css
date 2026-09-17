@@ -883,6 +883,8 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------------- Petits ecrans ---------------- */
 
+.selecteur-colonnes-mobile { display: none; }
+
 @media (max-width: 900px) {
   .tableau-kanban {
     grid-template-columns: 1fr;
@@ -890,6 +892,40 @@ a { color: inherit; text-decoration: none; }
   .bandeau-page {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .selecteur-colonnes-mobile {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+  }
+
+  .onglet-colonne {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--bordure-forte);
+    border-radius: 20px;
+    background: var(--surface);
+    font-family: inherit;
+    font-size: 0.83rem;
+    color: var(--texte-doux);
+    cursor: pointer;
+  }
+
+  .onglet-colonne-actif {
+    border-color: var(--accent);
+    background: var(--accent-clair);
+    color: var(--accent-fonce);
+    font-weight: 600;
+  }
+
+  .colonne-cachee-mobile {
+    display: none;
   }
 }
 /* ============================================================

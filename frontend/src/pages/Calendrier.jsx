@@ -158,85 +158,110 @@ export default function Calendrier() {
 
       {erreur && <div className="alerte">{erreur}</div>}
 
-      <div className="calendrier-barre">
-        <button className="bouton bouton-discret" onClick={moisPrecedent}>
-          ‹
-        </button>
-        <strong className="calendrier-mois">
-          {MOIS[mois]} {annee}
-        </strong>
-        <button className="bouton bouton-discret" onClick={moisSuivant}>
-          ›
-        </button>
-        <button
-          className="bouton bouton-discret calendrier-aujourdhui"
-          onClick={revenirAujourdhui}
-        >
-          Aujourd'hui
-        </button>
-      </div>
+      <div className="carte calendrier-carte">
+        <div className="calendrier-barre">
+          <button
+            className="bouton-icone calendrier-fleche"
+            onClick={moisPrecedent}
+            title="Mois precedent"
+          >
+            ‹
+          </button>
+          <strong className="calendrier-mois">
+            {MOIS[mois]} {annee}
+          </strong>
+          <button
+            className="bouton-icone calendrier-fleche"
+            onClick={moisSuivant}
+            title="Mois suivant"
+          >
+            ›
+          </button>
+          <button
+            className="bouton bouton-discret calendrier-aujourdhui"
+            onClick={revenirAujourdhui}
+          >
+            Aujourd'hui
+          </button>
+        </div>
 
-      <div className="calendrier">
-        {JOURS.map((jour) => (
-          <div key={jour} className="calendrier-jour-entete">
-            {jour}
-          </div>
-        ))}
-
-        {grille.map((date) => {
-          const cleJour = cle(date);
-          const duMois = date.getMonth() === mois;
-          const estAujourdhui = cleJour === cleAujourdhui;
-          const duJour = parDate[cleJour] || [];
-
-          return (
+        <div className="calendrier">
+          {JOURS.map((jour, index) => (
             <div
-              key={cleJour}
+              key={jour}
               className={
-                "calendrier-case" +
-                (duMois ? "" : " calendrier-case-hors-mois") +
-                (estAujourdhui ? " calendrier-case-aujourdhui" : "")
+                "calendrier-jour-entete" +
+                (index >= 5 ? " calendrier-jour-weekend" : "")
               }
             >
-              <span className="calendrier-numero">{date.getDate()}</span>
-
-              <div className="calendrier-taches">
-                {duJour.slice(0, 3).map((tache) => (
-                  <button
-                    key={tache.id}
-                    className={
-                      "puce-tache" +
-                      ` puce-${tache.priorite}` +
-                      (tache.statut === "TERMINEE" ? " puce-terminee" : "") +
-                      (tache.enRetard ? " puce-retard" : "")
-                    }
-                    onClick={() => setTacheOuverte(tache.id)}
-                    title={
-                      tache.titre +
-                      (tache.assigneA ? ` — ${tache.assigneA.nomComplet}` : "")
-                    }
-                  >
-                    {tache.titre}
-                  </button>
-                ))}
-
-                {duJour.length > 3 && (
-                  <span className="texte-discret petit">
-                    +{duJour.length - 3} autre{duJour.length - 3 > 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
+              {jour}
             </div>
-          );
-        })}
-      </div>
+          ))}
 
-      <div className="calendrier-legende">
-        <span><i className="puce-legende puce-URGENTE" /> Urgente</span>
-        <span><i className="puce-legende puce-HAUTE" /> Haute</span>
-        <span><i className="puce-legende puce-MOYENNE" /> Moyenne</span>
-        <span><i className="puce-legende puce-BASSE" /> Basse</span>
-        <span><i className="puce-legende puce-terminee" /> Terminee</span>
+          {grille.map((date, index) => {
+            const cleJour = cle(date);
+            const duMois = date.getMonth() === mois;
+            const estAujourdhui = cleJour === cleAujourdhui;
+            const estWeekend = index % 7 >= 5;
+            const duJour = parDate[cleJour] || [];
+
+            return (
+              <div
+                key={cleJour}
+                className={
+                  "calendrier-case" +
+                  (duMois ? "" : " calendrier-case-hors-mois") +
+                  (estWeekend ? " calendrier-case-weekend" : "") +
+                  (estAujourdhui ? " calendrier-case-aujourdhui" : "")
+                }
+              >
+                <span
+                  className={
+                    "calendrier-numero" +
+                    (estAujourdhui ? " calendrier-numero-aujourdhui" : "")
+                  }
+                >
+                  {date.getDate()}
+                </span>
+
+                <div className="calendrier-taches">
+                  {duJour.slice(0, 3).map((tache) => (
+                    <button
+                      key={tache.id}
+                      className={
+                        "puce-tache" +
+                        ` puce-${tache.priorite}` +
+                        (tache.statut === "TERMINEE" ? " puce-terminee" : "") +
+                        (tache.enRetard ? " puce-retard" : "")
+                      }
+                      onClick={() => setTacheOuverte(tache.id)}
+                      title={
+                        tache.titre +
+                        (tache.assigneA ? ` — ${tache.assigneA.nomComplet}` : "")
+                      }
+                    >
+                      {tache.titre}
+                    </button>
+                  ))}
+
+                  {duJour.length > 3 && (
+                    <span className="texte-discret petit">
+                      +{duJour.length - 3} autre{duJour.length - 3 > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="calendrier-legende">
+          <span><i className="puce-legende puce-URGENTE" /> Urgente</span>
+          <span><i className="puce-legende puce-HAUTE" /> Haute</span>
+          <span><i className="puce-legende puce-MOYENNE" /> Moyenne</span>
+          <span><i className="puce-legende puce-BASSE" /> Basse</span>
+          <span><i className="puce-legende puce-terminee" /> Terminee</span>
+        </div>
       </div>
 
       {sansEcheance.length > 0 && (

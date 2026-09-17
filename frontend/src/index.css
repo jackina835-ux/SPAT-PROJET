@@ -538,12 +538,22 @@ a { color: inherit; text-decoration: none; }
 .carte-tache {
   background: var(--surface);
   border: 1px solid var(--bordure);
+  border-left: 4px solid var(--bordure-forte);
   border-radius: 9px;
   padding: 11px 12px;
   box-shadow: 0 1px 2px rgba(30, 30, 25, 0.05);
   cursor: grab;
 }
 .carte-tache:active { cursor: grabbing; }
+
+.carte-tache-BASSE   { border-left-color: #9d9b93; }
+.carte-tache-MOYENNE { border-left-color: var(--avertissement); }
+.carte-tache-HAUTE   { border-left-color: var(--accent); }
+.carte-tache-URGENTE { border-left-color: var(--alerte); }
+
+/* Priorite au vert : une tache terminee garde son statut visible
+   meme si sa priorite d'origine etait urgente. */
+.carte-tache-terminee { border-left-color: var(--succes-couleur); }
 
 .carte-tache-deplacee {
   box-shadow: 0 8px 20px rgba(30, 30, 25, 0.16);
@@ -604,13 +614,37 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 0 0 3px var(--accent-clair);
 }
 
-.filtre-recherche {
+.filtre-recherche-conteneur {
+  position: relative;
   flex: 1;
   min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.filtre-recherche-conteneur svg {
+  position: absolute;
+  left: 11px;
+  color: var(--texte-doux);
+  pointer-events: none;
+}
+
+.filtre-recherche {
+  width: 100%;
+}
+
+.barre-filtres .filtre-recherche {
+  padding-left: 34px;
 }
 
 .filtre-resultat {
   margin: -2px 0 14px;
+}
+
+.bouton-icone-texte {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 /* ---------------- Administration des comptes ---------------- */
@@ -668,19 +702,89 @@ a { color: inherit; text-decoration: none; }
   color: var(--succes-fonce);
 }
 
-/* ---- Tuiles de statistiques (accueil) ---- */
+/* ---- Page d'accueil : barre laterale + contenu ---- */
 
-.accueil-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin: 18px 0 28px;
+.accueil-page {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 61px);
 }
 
-@media (max-width: 640px) {
-  .accueil-stats {
-    grid-template-columns: 1fr;
+.accueil-bande-accent {
+  width: 18px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #f2c14e 0%, #c9960c 100%);
+}
+
+.accueil-barre-laterale {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 32px 22px 40px;
+  background: #f6db94;
+  border-right: 1px solid var(--bordure);
+}
+
+.accueil-bouton-projets {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.accueil-contenu-principal {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 32px 60px;
+}
+
+.accueil-section-compacte .titre-section {
+  font-size: 0.78rem;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--texte-doux);
+}
+
+.accueil-section-compacte .etat-vide-carte {
+  padding: 14px 12px;
+  gap: 5px;
+}
+
+.accueil-section-compacte .etat-vide-carte p {
+  font-size: 0.76rem;
+}
+
+.accueil-section-compacte .etat-vide-icone {
+  width: 22px;
+  height: 22px;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 900px) {
+  .accueil-page {
+    flex-direction: column;
+    min-height: 0;
   }
+  .accueil-bande-accent {
+    width: 100%;
+    height: 10px;
+  }
+  .accueil-barre-laterale {
+    width: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--bordure);
+  }
+}
+
+/* ---- Tuiles de statistiques (accueil) ---- */
+
+.accueil-stats-verticales {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .stat-tuile {
@@ -726,26 +830,23 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: 1fr;
 }
 
-.accueil-deux-colonnes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 760px) {
-  .accueil-deux-colonnes {
-    grid-template-columns: 1fr;
-  }
-}
-
 .carte-tache-accueil {
   display: block;
   cursor: pointer;
+  border-left: 4px solid var(--avertissement);
   transition: border-color 0.15s, transform 0.15s;
+}
+.carte-tache-accueil .carte-tache-haut {
+  justify-content: flex-start;
+  gap: 6px;
+}
+.carte-tache-accueil .etiquette {
+  font-size: 0.66rem;
+  padding: 1px 7px;
 }
 .carte-tache-accueil:hover {
   border-color: var(--accent);
+  border-left-color: var(--avertissement);
   transform: translateY(-2px);
 }
 .carte-tache-accueil strong {
@@ -1155,15 +1256,32 @@ a { color: inherit; text-decoration: none; }
    Calendrier des echeances
    ============================================================ */
 
+.calendrier-carte { padding: 22px 24px 20px; }
+
 .calendrier-barre {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.calendrier-fleche {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--bordure-forte);
+  font-size: 1rem;
+}
+.calendrier-fleche:hover {
+  background: var(--accent-clair);
+  color: var(--accent-fonce);
 }
 
 .calendrier-mois {
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   min-width: 180px;
   text-align: center;
 }
@@ -1191,6 +1309,8 @@ a { color: inherit; text-decoration: none; }
   text-align: center;
 }
 
+.calendrier-jour-weekend { color: var(--avertissement); }
+
 .calendrier-case {
   background: var(--surface);
   min-height: 104px;
@@ -1203,6 +1323,8 @@ a { color: inherit; text-decoration: none; }
 .calendrier-case-hors-mois { background: #faf9f6; }
 .calendrier-case-hors-mois .calendrier-numero { color: var(--bordure-forte); }
 
+.calendrier-case-weekend { background: #fdfaf1; }
+
 .calendrier-case-aujourdhui {
   background: var(--accent-clair);
   box-shadow: inset 0 0 0 2px var(--accent);
@@ -1213,8 +1335,16 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   color: var(--texte-doux);
 }
-.calendrier-case-aujourdhui .calendrier-numero {
-  color: var(--accent-fonce);
+
+.calendrier-numero-aujourdhui {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
 }
 
 .calendrier-taches {

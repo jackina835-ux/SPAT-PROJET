@@ -31,6 +31,35 @@ function formaterDate(valeur) {
   });
 }
 
+function IconeCalendrier() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </svg>
+  );
+}
+
+function IconeEquipe() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6" />
+      <circle cx="17" cy="8" r="2.6" />
+      <path d="M17 5.4a2.6 2.6 0 0 1 3 6.9M22 20c0-2.8-2.1-5.1-5-5.8" />
+    </svg>
+  );
+}
+
+function IconeRecherche() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
 export default function Kanban() {
   const { projetId } = useParams();
   const { utilisateur } = useAuth();
@@ -253,15 +282,17 @@ export default function Kanban() {
         <div className="bandeau-actions">
           <Link
             to={`/projets/${projetId}/calendrier`}
-            className="bouton bouton-discret"
+            className="bouton bouton-discret bouton-icone-texte"
           >
+            <IconeCalendrier />
             Calendrier
           </Link>
 
           <Link
             to={`/projets/${projetId}/equipe`}
-            className="bouton bouton-discret"
+            className="bouton bouton-discret bouton-icone-texte"
           >
+            <IconeEquipe />
             Charge de l'equipe
           </Link>
 
@@ -302,13 +333,16 @@ export default function Kanban() {
       {erreur && <div className="alerte">{erreur}</div>}
 
       <div className="barre-filtres">
-        <input
-          type="search"
-          className="filtre-recherche"
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher une tache…"
-        />
+        <div className="filtre-recherche-conteneur">
+          <IconeRecherche />
+          <input
+            type="search"
+            className="filtre-recherche"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher une tache…"
+          />
+        </div>
 
         <select
           value={filtrePriorite}
@@ -459,6 +493,10 @@ export default function Kanban() {
                             <article
                               className={
                                 "carte-tache" +
+                                ` carte-tache-${tache.priorite}` +
+                                (tache.statut === "TERMINEE"
+                                  ? " carte-tache-terminee"
+                                  : "") +
                                 (etatCarte.isDragging
                                   ? " carte-tache-deplacee"
                                   : "") +

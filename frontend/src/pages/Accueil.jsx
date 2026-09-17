@@ -77,14 +77,14 @@ function CarteTacheAccueil({ tache }) {
   );
 }
 
-function SectionTaches({ titre, taches, messageVide, variante, colonne }) {
+function SectionTaches({ titre, taches, messageVide, variante, compacte }) {
   const classeCompteur =
     variante && taches.length > 0 ? `compteur-${variante}` : "";
   const classeGrille =
-    "grille-taches-accueil" + (colonne ? " grille-taches-accueil-colonne" : "");
+    "grille-taches-accueil" + (compacte ? " grille-taches-accueil-colonne" : "");
 
   return (
-    <section>
+    <section className={compacte ? "accueil-section-compacte" : undefined}>
       <h2 className="titre-section">
         {titre}
         <span className={`compteur ${classeCompteur}`}>
@@ -105,6 +105,23 @@ function SectionTaches({ titre, taches, messageVide, variante, colonne }) {
         </div>
       )}
     </section>
+  );
+}
+
+function IconeDossier() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+    </svg>
   );
 }
 
@@ -167,47 +184,49 @@ export default function Accueil() {
   const prenom = utilisateur.nomComplet.split(" ")[0];
 
   return (
-    <main className="conteneur conteneur-large">
-      <div className="bandeau-page">
+    <div className="accueil-page">
+      <div className="accueil-bande-accent" />
+
+      <aside className="accueil-barre-laterale">
         <div>
           <h1>Bonjour {prenom}</h1>
           <p className="texte-discret">Voici un coup d'oeil sur votre semaine.</p>
         </div>
-        <Link to="/projets" className="bouton bouton-discret">
+
+        <Link to="/projets" className="bouton bouton-discret accueil-bouton-projets">
+          <IconeDossier />
           Voir tous les projets
         </Link>
-      </div>
 
-      {erreur && <div className="alerte">{erreur}</div>}
+        {erreur && <div className="alerte">{erreur}</div>}
 
-      <div className="accueil-stats">
-        <div className="stat-tuile stat-tuile-alerte">
-          <span className="stat-tuile-valeur">{enRetard.length}</span>
-          <span className="stat-tuile-libelle">
-            tache{enRetard.length > 1 ? "s" : ""} en retard
-          </span>
+        <div className="accueil-stats-verticales">
+          <div className="stat-tuile stat-tuile-alerte">
+            <span className="stat-tuile-valeur">{enRetard.length}</span>
+            <span className="stat-tuile-libelle">
+              tache{enRetard.length > 1 ? "s" : ""} en retard
+            </span>
+          </div>
+          <div className="stat-tuile stat-tuile-avertissement">
+            <span className="stat-tuile-valeur">{cetteSemaine.length}</span>
+            <span className="stat-tuile-libelle">
+              echeance{cetteSemaine.length > 1 ? "s" : ""} cette semaine
+            </span>
+          </div>
+          <div className="stat-tuile stat-tuile-succes">
+            <span className="stat-tuile-valeur">{enCours.length}</span>
+            <span className="stat-tuile-libelle">
+              tache{enCours.length > 1 ? "s" : ""} en cours
+            </span>
+          </div>
         </div>
-        <div className="stat-tuile stat-tuile-avertissement">
-          <span className="stat-tuile-valeur">{cetteSemaine.length}</span>
-          <span className="stat-tuile-libelle">
-            echeance{cetteSemaine.length > 1 ? "s" : ""} cette semaine
-          </span>
-        </div>
-        <div className="stat-tuile stat-tuile-succes">
-          <span className="stat-tuile-valeur">{enCours.length}</span>
-          <span className="stat-tuile-libelle">
-            tache{enCours.length > 1 ? "s" : ""} en cours
-          </span>
-        </div>
-      </div>
 
-      <div className="accueil-deux-colonnes">
         <SectionTaches
           titre="Mes retards"
           taches={enRetard}
           messageVide="Aucun retard. Tout est a jour."
           variante="alerte"
-          colonne
+          compacte
         />
 
         <SectionTaches
@@ -215,16 +234,18 @@ export default function Accueil() {
           taches={cetteSemaine}
           messageVide="Aucune echeance dans les 7 prochains jours."
           variante="avertissement"
-          colonne
+          compacte
         />
-      </div>
+      </aside>
 
-      <SectionTaches
-        titre="Mes taches en cours"
-        taches={enCours}
-        messageVide="Aucune tache active pour le moment."
-        variante="succes"
-      />
-    </main>
+      <main className="accueil-contenu-principal">
+        <SectionTaches
+          titre="Mes taches en cours"
+          taches={enCours}
+          messageVide="Aucune tache active pour le moment."
+          variante="succes"
+        />
+      </main>
+    </div>
   );
 }

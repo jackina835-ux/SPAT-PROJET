@@ -94,6 +94,14 @@ function IconeRecherche() {
   );
 }
 
+function IconeExport() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12M7 10l5 5 5-5M4 19h16" />
+    </svg>
+  );
+}
+
 export default function Kanban() {
   const { projetId } = useParams();
   const { utilisateur } = useAuth();
@@ -105,6 +113,7 @@ export default function Kanban() {
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [tacheOuverte, setTacheOuverte] = useState(null);
   const [membresOuvert, setMembresOuvert] = useState(false);
+  const [exportEnCours, setExportEnCours] = useState(false);
 
   const [recherche, setRecherche] = useState("");
   const [filtrePriorite, setFiltrePriorite] = useState("");
@@ -229,6 +238,24 @@ export default function Kanban() {
     }
   }
 
+  async function exporter() {
+    setExportEnCours(true);
+    try {
+      const nomFichier =
+        "taches-" +
+        (kanban?.projetNom || "projet")
+          .replace(/[^a-zA-Z0-9-]+/g, "-")
+          .replace(/-+/g, "-") +
+        ".xlsx";
+      await apiTaches.exporterTaches(projetId, nomFichier);
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Export impossible"));
+    } finally {
+      setExportEnCours(false);
+    }
+  }
+
   const filtresActifs =
     recherche.trim() !== "" || filtrePriorite !== "" || filtreAssigneId !== "";
 
@@ -330,6 +357,16 @@ export default function Kanban() {
             <IconeEquipe />
             Charge de l'equipe
           </Link>
+
+          <button
+            type="button"
+            className="bouton bouton-discret bouton-icone-texte"
+            onClick={exporter}
+            disabled={exportEnCours}
+          >
+            <IconeExport />
+            {exportEnCours ? "Export…" : "Exporter"}
+          </button>
 
           {gestionnaireProjet && (
             <button

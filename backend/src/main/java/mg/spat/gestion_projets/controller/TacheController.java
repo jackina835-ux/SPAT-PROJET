@@ -6,11 +6,15 @@ import mg.spat.gestion_projets.dto.KanbanDTO;
 import mg.spat.gestion_projets.dto.TacheCreationDTO;
 import mg.spat.gestion_projets.dto.TacheDTO;
 import mg.spat.gestion_projets.service.TacheService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -61,6 +65,24 @@ public class TacheController {
     @GetMapping("/projet/{projetId}/en-retard")
     public List<TacheDTO> listerEnRetard(@PathVariable Long projetId) {
         return tacheService.listerEnRetard(projetId);
+    }
+
+    /** GET /api/taches/projet/1/export */
+    @GetMapping("/projet/{projetId}/export")
+    public ResponseEntity<byte[]> exporterExcel(@PathVariable Long projetId) {
+        TacheService.ExportExcel export = tacheService.exporterExcel(projetId);
+
+        String nomEncode = URLEncoder
+                .encode(export.nomFichier(), StandardCharsets.UTF_8)
+                .replace("+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentLength(export.contenu().length)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename*=UTF-8''" + nomEncode)
+                .body(export.contenu());
     }
 
     /** GET /api/taches/utilisateur/3 */

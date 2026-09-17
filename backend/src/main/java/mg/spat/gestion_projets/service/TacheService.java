@@ -11,9 +11,19 @@ import mg.spat.gestion_projets.repository.ProjetRepository;
 import mg.spat.gestion_projets.repository.SuiviTempsRepository;
 import mg.spat.gestion_projets.repository.TacheRepository;
 import mg.spat.gestion_projets.repository.UtilisateurRepository;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,6 +37,20 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class TacheService {
+
+    private static final Map<StatutTache, String> LIBELLE_STATUT = Map.of(
+            StatutTache.A_FAIRE, "A faire",
+            StatutTache.EN_COURS, "En cours",
+            StatutTache.EN_REVISION, "En revision",
+            StatutTache.TERMINEE, "Terminee"
+    );
+
+    private static final Map<Priorite, String> LIBELLE_PRIORITE = Map.of(
+            Priorite.BASSE, "Basse",
+            Priorite.MOYENNE, "Moyenne",
+            Priorite.HAUTE, "Haute",
+            Priorite.URGENTE, "Urgente"
+    );
 
     private final TacheRepository tacheRepository;
     private final ProjetRepository projetRepository;
@@ -134,6 +158,78 @@ public class TacheService {
         kanban.setTotalTaches(taches.size());
         kanban.setTachesEnRetard((int) enRetard);
         return kanban;
+    }
+
+    public record ExportExcel(byte[] contenu, String nomFichier) {
+    }
+
+    /**
+     * Export Excel de toutes les taches d'un projet : un rapport
+     * imprimable ou partageable hors de l'application.
+     */
+    @Transactional(readOnly = true)
+    public ExportExcel exporterExcel(Long projetId) {
+        Projet projet = projetRepository.findById(projetId)
+                .orElseThrow(() -> RessourceIntrouvableException.pour("Projet", projetId));
+        List<Tache> taches = tacheRepository.findByProjetId(projetId);
+
+        try (XSSFWorkbook classeur = new XSSFWorkbook();
+             ByteArrayOutputStream flux = new ByteArrayOutputStream()) {
+
+            Sheet feuille = classeur.createSheet("Taches");
+
+            CellStyle styleEntete = classeur.createCellStyle();
+            Font policeEntete = classeur.createFont();
+            policeEntete.setBold(true);
+            styleEntete.setFont(policeEntete);
+            styleEntete.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            styleEntete.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            String[] entetes = {
+                "Titre", "Statut", "Priorite", "Assigne a",
+                "Echeance", "Charge estimee (h)", "En retard"
+            };
+            Row ligneEntete = feuille.createRow(0);
+            for (int i = 0; i < entetes.length; i++) {
+                Cell cellule = ligneEntete.createCell(i);
+                cellule.setCellValue(entetes[i]);
+                cellule.setCellStyle(styleEntete);
+            }
+
+            int numeroLigne = 1;
+            for (Tache tache : taches) {
+                Row ligne = feuille.createRow(numeroLigne++);
+                ligne.createCell(0).setCellValue(tache.getTitre());
+                ligne.createCell(1).setCellValue(LIBELLE_STATUT.get(tache.getStatut()));
+                ligne.createCell(2).setCellValue(LIBELLE_PRIORITE.get(tache.getPriorite()));
+                ligne.createCell(3).setCellValue(
+                        tache.getAssigneA() != null
+                                ? tache.getAssigneA().getNomComplet() : "");
+                ligne.createCell(4).setCellValue(
+                        tache.getDateEcheance() != null
+                                ? tache.getDateEcheance().toString() : "");
+                if (tache.getChargeEstimee() != null) {
+                    ligne.createCell(5).setCellValue(tache.getChargeEstimee());
+                }
+                ligne.createCell(6).setCellValue(tache.estEnRetard() ? "Oui" : "Non");
+            }
+
+            for (int i = 0; i < entetes.length; i++) {
+                feuille.autoSizeColumn(i);
+            }
+
+            classeur.write(flux);
+
+            String nomProjet = projet.getNom()
+                    .replaceAll("[^a-zA-Z0-9-]+", "-")
+                    .replaceAll("-+", "-");
+            String nomFichier = "taches-" + nomProjet + ".xlsx";
+
+            return new ExportExcel(flux.toByteArray(), nomFichier);
+
+        } catch (IOException e) {
+            throw new IllegalStateException("Impossible de generer l'export Excel", e);
+        }
     }
 
     public TacheDTO creer(TacheCreationDTO demande) {

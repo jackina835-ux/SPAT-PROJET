@@ -77,12 +77,15 @@ function CarteTacheAccueil({ tache }) {
   );
 }
 
-function SectionTaches({ titre, taches, messageVide, alerte }) {
+function SectionTaches({ titre, taches, messageVide, variante }) {
+  const classeCompteur =
+    variante && taches.length > 0 ? `compteur-${variante}` : "";
+
   return (
     <section>
       <h2 className="titre-section">
         {titre}
-        <span className={`compteur ${alerte && taches.length > 0 ? "compteur-alerte" : ""}`}>
+        <span className={`compteur ${classeCompteur}`}>
           {taches.length}
         </span>
       </h2>
@@ -163,12 +166,7 @@ export default function Accueil() {
       <div className="bandeau-page">
         <div>
           <h1>Bonjour {prenom}</h1>
-          <p className="texte-discret">
-            {enCours.length} tache{enCours.length > 1 ? "s" : ""} en cours
-            {enRetard.length > 0 && (
-              <span className="texte-alerte"> · {enRetard.length} en retard</span>
-            )}
-          </p>
+          <p className="texte-discret">Voici un coup d'oeil sur votre semaine.</p>
         </div>
         <Link to="/projets" className="bouton bouton-discret">
           Voir tous les projets
@@ -177,23 +175,46 @@ export default function Accueil() {
 
       {erreur && <div className="alerte">{erreur}</div>}
 
+      <div className="accueil-stats">
+        <div className="stat-tuile stat-tuile-alerte">
+          <span className="stat-tuile-valeur">{enRetard.length}</span>
+          <span className="stat-tuile-libelle">
+            tache{enRetard.length > 1 ? "s" : ""} en retard
+          </span>
+        </div>
+        <div className="stat-tuile stat-tuile-avertissement">
+          <span className="stat-tuile-valeur">{cetteSemaine.length}</span>
+          <span className="stat-tuile-libelle">
+            echeance{cetteSemaine.length > 1 ? "s" : ""} cette semaine
+          </span>
+        </div>
+        <div className="stat-tuile stat-tuile-succes">
+          <span className="stat-tuile-valeur">{enCours.length}</span>
+          <span className="stat-tuile-libelle">
+            tache{enCours.length > 1 ? "s" : ""} en cours
+          </span>
+        </div>
+      </div>
+
       <SectionTaches
         titre="Mes retards"
         taches={enRetard}
         messageVide="Aucun retard. Tout est a jour."
-        alerte
+        variante="alerte"
       />
 
       <SectionTaches
         titre="Mes echeances de la semaine"
         taches={cetteSemaine}
         messageVide="Aucune echeance dans les 7 prochains jours."
+        variante="avertissement"
       />
 
       <SectionTaches
         titre="Mes taches en cours"
         taches={enCours}
         messageVide="Aucune tache active pour le moment."
+        variante="succes"
       />
     </main>
   );

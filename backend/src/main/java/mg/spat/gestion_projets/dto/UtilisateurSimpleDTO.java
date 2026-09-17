@@ -14,6 +14,7 @@ public class UtilisateurSimpleDTO {
     private String nomComplet;
     private String email;
     private Role role;
+    private Boolean actif;
 
     public UtilisateurSimpleDTO() {
     }
@@ -27,6 +28,7 @@ public class UtilisateurSimpleDTO {
         dto.nomComplet = u.getNomComplet();
         dto.email = u.getEmail();
         dto.role = u.getRole();
+        dto.actif = u.getActif();
         return dto;
     }
 
@@ -41,4 +43,7 @@ public class UtilisateurSimpleDTO {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public Boolean getActif() { return actif; }
+    public void setActif(Boolean actif) { this.actif = actif; }
 }

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { estAdmin } from "../utils/droits";
 import Cloche from "./Cloche";
 
 const LIBELLE_ROLE = {
@@ -19,7 +20,7 @@ export default function Entete() {
 
   return (
     <header className="entete">
-      <Link to="/projets" className="entete-marque">
+      <Link to="/accueil" className="entete-marque">
         <span className="entete-logo">GP</span>
         <span>
           <strong>Gestion de projets</strong>
@@ -29,6 +30,14 @@ export default function Entete() {
 
       {utilisateur && (
         <div className="entete-droite">
+          <Link to="/projets" className="bouton bouton-discret entete-lien-projets">
+            Projets
+          </Link>
+          {estAdmin(utilisateur) && (
+            <Link to="/administration" className="bouton bouton-discret">
+              Administration
+            </Link>
+          )}
           <Cloche />
 
           <div className="entete-profil">

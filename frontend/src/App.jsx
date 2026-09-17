@@ -3,6 +3,8 @@ import { FournisseurAuth, useAuth } from "./context/AuthContext";
 import RouteProtegee from "./components/RouteProtegee";
 import Entete from "./components/Entete";
 import Connexion from "./pages/Connexion";
+import Accueil from "./pages/Accueil";
+import Administration from "./pages/Administration";
 import ListeProjets from "./pages/ListeProjets";
 import Kanban from "./pages/Kanban";
 import Equipe from "./pages/Equipe";
@@ -24,7 +26,29 @@ function Routage() {
     <Routes>
       <Route
         path="/connexion"
-        element={estConnecte ? <Navigate to="/projets" replace /> : <Connexion />}
+        element={estConnecte ? <Navigate to="/accueil" replace /> : <Connexion />}
+      />
+
+      <Route
+        path="/accueil"
+        element={
+          <RouteProtegee>
+            <Disposition>
+              <Accueil />
+            </Disposition>
+          </RouteProtegee>
+        }
+      />
+
+      <Route
+        path="/administration"
+        element={
+          <RouteProtegee>
+            <Disposition>
+              <Administration />
+            </Disposition>
+          </RouteProtegee>
+        }
       />
 
       <Route
@@ -71,7 +95,7 @@ function Routage() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/projets" replace />} />
+      <Route path="*" element={<Navigate to="/accueil" replace />} />
     </Routes>
   );
 }

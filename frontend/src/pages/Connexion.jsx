@@ -18,7 +18,7 @@ export default function Connexion() {
     setEnvoi(true);
     try {
       await seConnecter(email, motDePasse);
-      naviguer("/projets");
+      naviguer("/accueil");
     } catch (e) {
       setErreur(messageErreur(e, "Connexion impossible"));
     } finally {

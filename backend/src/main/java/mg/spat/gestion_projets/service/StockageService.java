@@ -12,9 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Ecriture et lecture des fichiers sur le disque.
@@ -131,6 +134,32 @@ public class StockageService {
             Files.deleteIfExists(dossier.resolve(nomStocke).normalize());
         } catch (IOException e) {
             journal.warn("Fichier non efface sur le disque : {}", nomStocke, e);
+        }
+    }
+
+    /**
+     * Noms de tous les fichiers presents dans le dossier de stockage.
+     * Sert a reperer les fichiers orphelins : ceux qui trainent sur
+     * le disque sans plus aucune ligne en base (upload interrompu,
+     * ligne supprimee manuellement, etc.).
+     */
+    public Set<String> listerFichiers() {
+        try (Stream<Path> flux = Files.list(dossier)) {
+            return flux.filter(Files::isRegularFile)
+                    .map(p -> p.getFileName().toString())
+                    .collect(Collectors.toCollection(HashSet::new));
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Impossible de lister le dossier de stockage", e);
+        }
+    }
+
+    /** Taille d'un fichier sur le disque, 0 si on ne peut pas la lire. */
+    public long tailleFichier(String nomStocke) {
+        try {
+            return Files.size(dossier.resolve(nomStocke).normalize());
+        } catch (IOException e) {
+            return 0;
         }
     }
 

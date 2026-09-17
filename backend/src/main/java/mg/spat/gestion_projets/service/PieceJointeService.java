@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -141,6 +143,36 @@ public class PieceJointeService {
                 octets,
                 piece.getNomOriginal(),
                 piece.getTypeMime());
+    }
+
+    /** Resultat d'un nettoyage : ce qui a ete efface, et combien de place ca libere. */
+    public record RapportNettoyage(int fichiersSupprimes, long octetsLiberes, List<String> noms) {
+    }
+
+    /**
+     * Efface les fichiers presents sur le disque mais sans aucune
+     * ligne en base (upload interrompu avant l'enregistrement de la
+     * ligne, ligne supprimee manuellement en base, etc.).
+     *
+     * Reservee a l'administrateur : c'est une action de maintenance,
+     * pas une action du quotidien.
+     */
+    @Transactional(readOnly = true)
+    public RapportNettoyage nettoyerOrphelins() {
+        Set<String> referencesEnBase = new HashSet<>(pieceJointeRepository.listerNomsStockes());
+        Set<String> surLeDisque = stockageService.listerFichiers();
+
+        List<String> orphelins = surLeDisque.stream()
+                .filter(nom -> !referencesEnBase.contains(nom))
+                .collect(Collectors.toList());
+
+        long octetsLiberes = 0;
+        for (String nom : orphelins) {
+            octetsLiberes += stockageService.tailleFichier(nom);
+            stockageService.effacer(nom);
+        }
+
+        return new RapportNettoyage(orphelins.size(), octetsLiberes, orphelins);
     }
 
     public void supprimer(Long id) {

@@ -69,4 +69,15 @@ public class PieceJointeController {
         pieceJointeService.supprimer(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * POST /api/pieces-jointes/nettoyer-orphelins
+     * Efface les fichiers du disque sans ligne correspondante en
+     * base. Action de maintenance, reservee a l'administrateur.
+     */
+    @PostMapping("/nettoyer-orphelins")
+    @PreAuthorize("hasRole('ADMIN')")
+    public PieceJointeService.RapportNettoyage nettoyerOrphelins() {
+        return pieceJointeService.nettoyerOrphelins();
+    }
 }

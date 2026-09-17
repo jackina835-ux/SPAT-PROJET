@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as apiAuth from "../api/auth";
 import * as apiUtilisateurs from "../api/utilisateurs";
+import * as apiPieces from "../api/pieces";
 import { messageErreur } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { estAdmin, LIBELLE_ROLE } from "../utils/droits";
+
+/** "3,4 Mo", "128 Ko" : lisible pour un rapport de nettoyage. */
+function formaterOctets(octets) {
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${Math.round(octets / 1024)} Ko`;
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 const COMPTE_VIDE = {
   nom: "",
@@ -33,6 +41,9 @@ export default function Administration() {
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [nouveau, setNouveau] = useState(COMPTE_VIDE);
   const [creation, setCreation] = useState(false);
+
+  const [nettoyage, setNettoyage] = useState(false);
+  const [rapportNettoyage, setRapportNettoyage] = useState(null);
 
   async function charger() {
     setChargement(true);
@@ -89,6 +100,27 @@ export default function Administration() {
       setErreur(messageErreur(e, "Action impossible"));
     } finally {
       setEnCours(null);
+    }
+  }
+
+  async function lancerNettoyage() {
+    if (!window.confirm(
+      "Effacer du disque tous les fichiers qui n'ont plus de ligne "
+      + "correspondante en base ? Cette action est irreversible."
+    )) {
+      return;
+    }
+    setNettoyage(true);
+    setSucces("");
+    setRapportNettoyage(null);
+    try {
+      const { data } = await apiPieces.nettoyerOrphelins();
+      setRapportNettoyage(data);
+      setErreur("");
+    } catch (e) {
+      setErreur(messageErreur(e, "Nettoyage impossible"));
+    } finally {
+      setNettoyage(false);
     }
   }
 
@@ -233,6 +265,34 @@ export default function Administration() {
           ))}
         </div>
       )}
+
+      <section className="carte section-maintenance">
+        <h3 className="panneau-sous-titre">Maintenance</h3>
+        <p className="texte-discret petit">
+          Efface du disque les fichiers qui n'ont plus de ligne
+          correspondante en base (upload interrompu, ligne supprimee
+          manuellement...).
+        </p>
+
+        <button
+          className="bouton bouton-discret"
+          onClick={lancerNettoyage}
+          disabled={nettoyage}
+        >
+          {nettoyage ? "Nettoyage…" : "Nettoyer les fichiers orphelins"}
+        </button>
+
+        {rapportNettoyage && (
+          <p className="texte-discret petit maintenance-rapport">
+            {rapportNettoyage.fichiersSupprimes === 0
+              ? "Aucun fichier orphelin trouve."
+              : `${rapportNettoyage.fichiersSupprimes} fichier${
+                  rapportNettoyage.fichiersSupprimes > 1 ? "s" : ""
+                } supprime${rapportNettoyage.fichiersSupprimes > 1 ? "s" : ""}, `
+                + `${formaterOctets(rapportNettoyage.octetsLiberes)} liberes.`}
+          </p>
+        )}
+      </section>
     </main>
   );
 }

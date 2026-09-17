@@ -27,6 +27,11 @@ export function supprimerPiece(id) {
   return client.delete(`/pieces-jointes/${id}`);
 }
 
+/** Efface les fichiers du disque sans ligne correspondante en base. */
+export function nettoyerOrphelins() {
+  return client.post("/pieces-jointes/nettoyer-orphelins");
+}
+
 /**
  * Telechargement.
  *

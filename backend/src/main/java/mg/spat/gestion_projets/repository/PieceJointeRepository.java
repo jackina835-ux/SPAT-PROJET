@@ -27,4 +27,8 @@ public interface PieceJointeRepository extends JpaRepository<PieceJointe, Long> 
     @Query("SELECT p.tache.id, COUNT(p) FROM PieceJointe p "
          + "WHERE p.tache.projet.id = :projetId GROUP BY p.tache.id")
     List<Object[]> compterParTachePourProjet(@Param("projetId") Long projetId);
+
+    /** Tous les noms de fichiers references en base, pour le nettoyage. */
+    @Query("SELECT p.nomStocke FROM PieceJointe p")
+    List<String> listerNomsStockes();
 }

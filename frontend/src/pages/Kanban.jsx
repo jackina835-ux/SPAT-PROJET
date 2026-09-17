@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import * as apiTaches from "../api/taches";
 import * as apiProjets from "../api/projets";
 import { messageErreur } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import { peutGererTaches, peutDeplacerTache } from "../utils/droits";
+import { peutGererTaches, peutGererProjet, peutDeplacerTache } from "../utils/droits";
 import PanneauTache from "../components/PanneauTache";
+import PanneauMembres from "../components/PanneauMembres";
 
 const COLONNES = [
   { cle: "A_FAIRE", libelle: "A faire" },
@@ -40,8 +41,14 @@ export default function Kanban() {
   const [erreur, setErreur] = useState("");
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [tacheOuverte, setTacheOuverte] = useState(null);
+  const [membresOuvert, setMembresOuvert] = useState(false);
+
+  const [recherche, setRecherche] = useState("");
+  const [filtrePriorite, setFiltrePriorite] = useState("");
+  const [filtreAssigneId, setFiltreAssigneId] = useState("");
 
   const gestionnaire = peutGererTaches(utilisateur, projet);
+  const gestionnaireProjet = peutGererProjet(utilisateur, projet);
 
   const [nouvelle, setNouvelle] = useState({
     titre: "",
@@ -75,6 +82,10 @@ export default function Kanban() {
    * Deplacement d'une carte.
    * On deplace d'abord a l'ecran pour que ce soit fluide,
    * puis on previent le serveur. En cas de refus, on remet en place.
+   *
+   * La carte est retrouvee par son identifiant plutot que par
+   * source.index : quand un filtre est actif, cet index designe une
+   * position dans la liste filtree, pas dans le tableau complet.
    */
   async function surFinDeplacement(resultat) {
     const { source, destination, draggableId } = resultat;
@@ -89,16 +100,18 @@ export default function Kanban() {
 
     const ancienEtat = kanban;
     const colonnes = { ...kanban.colonnes };
-    const depart = Array.from(colonnes[source.droppableId]);
-    const [carte] = depart.splice(source.index, 1);
-    colonnes[source.droppableId] = depart;
+    const carte = colonnes[source.droppableId].find(
+      (c) => String(c.id) === draggableId
+    );
+    if (!carte) return;
 
-    const arrivee = Array.from(colonnes[destination.droppableId]);
-    arrivee.splice(destination.index, 0, {
-      ...carte,
-      statut: destination.droppableId,
-    });
-    colonnes[destination.droppableId] = arrivee;
+    colonnes[source.droppableId] = colonnes[source.droppableId].filter(
+      (c) => String(c.id) !== draggableId
+    );
+    colonnes[destination.droppableId] = [
+      ...colonnes[destination.droppableId],
+      { ...carte, statut: destination.droppableId },
+    ];
 
     const compteurs = {};
     COLONNES.forEach((c) => {
@@ -150,6 +163,54 @@ export default function Kanban() {
     } catch (e) {
       setErreur(messageErreur(e, "Suppression impossible"));
     }
+  }
+
+  const filtresActifs =
+    recherche.trim() !== "" || filtrePriorite !== "" || filtreAssigneId !== "";
+
+  const colonnesFiltrees = useMemo(() => {
+    if (!kanban) return {};
+    if (!filtresActifs) return kanban.colonnes;
+
+    const termeRecherche = recherche.trim().toLowerCase();
+    const resultat = {};
+    for (const cle of Object.keys(kanban.colonnes)) {
+      resultat[cle] = kanban.colonnes[cle].filter((tache) => {
+        if (
+          termeRecherche &&
+          !tache.titre.toLowerCase().includes(termeRecherche) &&
+          !(tache.description || "").toLowerCase().includes(termeRecherche)
+        ) {
+          return false;
+        }
+        if (filtrePriorite && tache.priorite !== filtrePriorite) {
+          return false;
+        }
+        if (filtreAssigneId === "AUCUN" && tache.assigneA) {
+          return false;
+        }
+        if (
+          filtreAssigneId &&
+          filtreAssigneId !== "AUCUN" &&
+          String(tache.assigneA?.id) !== filtreAssigneId
+        ) {
+          return false;
+        }
+        return true;
+      });
+    }
+    return resultat;
+  }, [kanban, filtresActifs, recherche, filtrePriorite, filtreAssigneId]);
+
+  const totalFiltre = Object.values(colonnesFiltrees).reduce(
+    (somme, liste) => somme + liste.length,
+    0
+  );
+
+  function effacerFiltres() {
+    setRecherche("");
+    setFiltrePriorite("");
+    setFiltreAssigneId("");
   }
 
   if (chargement) {
@@ -204,6 +265,15 @@ export default function Kanban() {
             Charge de l'equipe
           </Link>
 
+          {gestionnaireProjet && (
+            <button
+              className="bouton bouton-discret"
+              onClick={() => setMembresOuvert(true)}
+            >
+              Membres
+            </button>
+          )}
+
           {gestionnaire && (
             <button
               className="bouton bouton-principal"
@@ -230,6 +300,53 @@ export default function Kanban() {
       )}
 
       {erreur && <div className="alerte">{erreur}</div>}
+
+      <div className="barre-filtres">
+        <input
+          type="search"
+          className="filtre-recherche"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="Rechercher une tache…"
+        />
+
+        <select
+          value={filtrePriorite}
+          onChange={(e) => setFiltrePriorite(e.target.value)}
+        >
+          <option value="">Toutes les priorites</option>
+          <option value="BASSE">Basse</option>
+          <option value="MOYENNE">Moyenne</option>
+          <option value="HAUTE">Haute</option>
+          <option value="URGENTE">Urgente</option>
+        </select>
+
+        <select
+          value={filtreAssigneId}
+          onChange={(e) => setFiltreAssigneId(e.target.value)}
+        >
+          <option value="">Tous les membres</option>
+          {projet?.membres.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.nomComplet}
+            </option>
+          ))}
+          <option value="AUCUN">Non assignee</option>
+        </select>
+
+        {filtresActifs && (
+          <button className="lien-discret" onClick={effacerFiltres}>
+            Effacer les filtres
+          </button>
+        )}
+      </div>
+
+      {filtresActifs && (
+        <p className="texte-discret petit filtre-resultat">
+          {totalFiltre} resultat{totalFiltre > 1 ? "s" : ""} sur{" "}
+          {kanban.totalTaches}
+        </p>
+      )}
 
       {formulaireOuvert && gestionnaire && (
         <form className="carte formulaire" onSubmit={creerTache}>
@@ -319,12 +436,12 @@ export default function Kanban() {
                     <span className={`point point-${colonne.cle}`} />
                     <strong>{colonne.libelle}</strong>
                     <span className="compteur">
-                      {kanban.compteurs[colonne.cle] ?? 0}
+                      {(colonnesFiltrees[colonne.cle] || []).length}
                     </span>
                   </div>
 
                   <div className="colonne-contenu">
-                    {(kanban.colonnes[colonne.cle] || []).map((tache, index) => {
+                    {(colonnesFiltrees[colonne.cle] || []).map((tache, index) => {
                       const deplacable = peutDeplacerTache(
                         utilisateur,
                         projet,
@@ -432,8 +549,13 @@ export default function Kanban() {
                     })}
                     {fourni.placeholder}
 
-                    {(kanban.colonnes[colonne.cle] || []).length === 0 && (
-                      <div className="colonne-vide">Aucune tache</div>
+                    {(colonnesFiltrees[colonne.cle] || []).length === 0 && (
+                      <div className="colonne-vide">
+                        {filtresActifs &&
+                        (kanban.colonnes[colonne.cle] || []).length > 0
+                          ? "Aucun resultat"
+                          : "Aucune tache"}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -448,6 +570,14 @@ export default function Kanban() {
           tacheId={tacheOuverte}
           projet={projet}
           onFermer={() => setTacheOuverte(null)}
+          onChangement={charger}
+        />
+      )}
+
+      {membresOuvert && projet && (
+        <PanneauMembres
+          projet={projet}
+          onFermer={() => setMembresOuvert(false)}
           onChangement={charger}
         />
       )}

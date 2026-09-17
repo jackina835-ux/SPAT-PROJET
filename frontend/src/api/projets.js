@@ -19,3 +19,11 @@ export function modifierProjet(id, donnees) {
 export function supprimerProjet(id) {
   return client.delete(`/projets/${id}`);
 }
+
+export function ajouterMembre(projetId, utilisateurId) {
+  return client.post(`/projets/${projetId}/membres/${utilisateurId}`);
+}
+
+export function retirerMembre(projetId, utilisateurId) {
+  return client.delete(`/projets/${projetId}/membres/${utilisateurId}`);
+}

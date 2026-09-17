@@ -105,11 +105,10 @@ a { color: inherit; text-decoration: none; }
 .entete-logo {
   width: 34px; height: 34px;
   border-radius: 8px;
-  background: var(--accent);
-  color: #fff;
-  display: grid; place-items: center;
-  font-weight: 700; font-size: 0.8rem;
-  letter-spacing: 0.5px;
+  background: #fff;
+  border: 1px solid var(--bordure);
+  object-fit: contain;
+  padding: 2px;
 }
 
 .entete-droite { display: flex; align-items: center; gap: 14px; }
@@ -678,6 +677,12 @@ a { color: inherit; text-decoration: none; }
   margin: 18px 0 28px;
 }
 
+@media (max-width: 640px) {
+  .accueil-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stat-tuile {
   background: var(--surface);
   border: 1px solid var(--bordure);
@@ -710,15 +715,28 @@ a { color: inherit; text-decoration: none; }
 .stat-tuile-succes { border-left-color: var(--succes-couleur); }
 .stat-tuile-succes .stat-tuile-valeur { color: var(--succes-fonce); }
 
-@media (max-width: 640px) {
-  .accueil-stats { grid-template-columns: 1fr; }
-}
-
 .grille-taches-accueil {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.grille-taches-accueil-colonne {
+  grid-template-columns: 1fr;
+}
+
+.accueil-deux-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .accueil-deux-colonnes {
+    grid-template-columns: 1fr;
+  }
 }
 
 .carte-tache-accueil {
@@ -734,6 +752,32 @@ a { color: inherit; text-decoration: none; }
   display: block;
   margin: 2px 0 3px;
   font-size: 0.92rem;
+}
+
+.etat-vide-carte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--texte-doux);
+  background: var(--surface);
+  border: 1px dashed var(--bordure-forte);
+  border-radius: var(--rayon);
+}
+
+.etat-vide-carte p { margin: 0; font-size: 0.88rem; }
+
+.etat-vide-icone {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--succes-clair);
+  color: var(--succes-fonce);
+  font-weight: 700;
 }
 
 /* ---------------- Petits ecrans ---------------- */

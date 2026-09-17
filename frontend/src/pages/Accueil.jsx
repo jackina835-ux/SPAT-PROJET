@@ -77,9 +77,11 @@ function CarteTacheAccueil({ tache }) {
   );
 }
 
-function SectionTaches({ titre, taches, messageVide, variante }) {
+function SectionTaches({ titre, taches, messageVide, variante, colonne }) {
   const classeCompteur =
     variante && taches.length > 0 ? `compteur-${variante}` : "";
+  const classeGrille =
+    "grille-taches-accueil" + (colonne ? " grille-taches-accueil-colonne" : "");
 
   return (
     <section>
@@ -91,9 +93,12 @@ function SectionTaches({ titre, taches, messageVide, variante }) {
       </h2>
 
       {taches.length === 0 ? (
-        <p className="texte-discret petit">{messageVide}</p>
+        <div className="etat-vide-carte">
+          <span className="etat-vide-icone">✓</span>
+          <p>{messageVide}</p>
+        </div>
       ) : (
-        <div className="grille-taches-accueil">
+        <div className={classeGrille}>
           {taches.map((t) => (
             <CarteTacheAccueil key={t.id} tache={t} />
           ))}
@@ -196,19 +201,23 @@ export default function Accueil() {
         </div>
       </div>
 
-      <SectionTaches
-        titre="Mes retards"
-        taches={enRetard}
-        messageVide="Aucun retard. Tout est a jour."
-        variante="alerte"
-      />
+      <div className="accueil-deux-colonnes">
+        <SectionTaches
+          titre="Mes retards"
+          taches={enRetard}
+          messageVide="Aucun retard. Tout est a jour."
+          variante="alerte"
+          colonne
+        />
 
-      <SectionTaches
-        titre="Mes echeances de la semaine"
-        taches={cetteSemaine}
-        messageVide="Aucune echeance dans les 7 prochains jours."
-        variante="avertissement"
-      />
+        <SectionTaches
+          titre="Mes echeances de la semaine"
+          taches={cetteSemaine}
+          messageVide="Aucune echeance dans les 7 prochains jours."
+          variante="avertissement"
+          colonne
+        />
+      </div>
 
       <SectionTaches
         titre="Mes taches en cours"

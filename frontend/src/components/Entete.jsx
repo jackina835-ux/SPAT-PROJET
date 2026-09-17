@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { estAdmin } from "../utils/droits";
 import Cloche from "./Cloche";
+import logoSpat from "../assets/logo-spat.jpg";
 
 const LIBELLE_ROLE = {
   ADMIN: "Administrateur",
@@ -21,7 +22,7 @@ export default function Entete() {
   return (
     <header className="entete">
       <Link to="/accueil" className="entete-marque">
-        <span className="entete-logo">GP</span>
+        <img src={logoSpat} alt="Logo SPAT" className="entete-logo" />
         <span>
           <strong>Gestion de projets</strong>
           <small>SPAT</small>

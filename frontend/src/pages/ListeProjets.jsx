@@ -25,6 +25,7 @@ export default function ListeProjets() {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
+  const [ongletArchives, setOngletArchives] = useState(false);
   const { utilisateur } = useAuth();
 
   const autoriseACreer = peutCreerProjet(utilisateur);
@@ -72,6 +73,12 @@ export default function ListeProjets() {
     }
   }
 
+  // Un projet termine ne se voit plus au quotidien : il est range
+  // dans les archives, consultable a la demande.
+  const projetsActifs = projets.filter((p) => p.statut !== "TERMINE");
+  const projetsArchives = projets.filter((p) => p.statut === "TERMINE");
+  const projetsAffiches = ongletArchives ? projetsArchives : projetsActifs;
+
   return (
     <main className="conteneur">
       <div className="bandeau-page">
@@ -93,6 +100,23 @@ export default function ListeProjets() {
       </div>
 
       {erreur && <div className="alerte">{erreur}</div>}
+
+      <div className="onglets-projets">
+        <button
+          className={`onglet ${!ongletArchives ? "onglet-actif" : ""}`}
+          onClick={() => setOngletArchives(false)}
+        >
+          Actifs
+          <span className="compteur">{projetsActifs.length}</span>
+        </button>
+        <button
+          className={`onglet ${ongletArchives ? "onglet-actif" : ""}`}
+          onClick={() => setOngletArchives(true)}
+        >
+          Archives
+          <span className="compteur">{projetsArchives.length}</span>
+        </button>
+      </div>
 
       {formulaireOuvert && autoriseACreer && (
         <form className="carte formulaire" onSubmit={creer}>
@@ -147,15 +171,17 @@ export default function ListeProjets() {
 
       {chargement ? (
         <div className="etat-vide">Chargement des projets…</div>
-      ) : projets.length === 0 ? (
+      ) : projetsAffiches.length === 0 ? (
         <div className="etat-vide">
-          {autoriseACreer
+          {ongletArchives
+            ? "Aucun projet archive pour l'instant."
+            : autoriseACreer
             ? "Aucun projet pour l'instant. Creez le premier."
             : "Aucun projet ne vous a encore ete confie."}
         </div>
       ) : (
         <div className="grille-projets">
-          {projets.map((projet) => (
+          {projetsAffiches.map((projet) => (
             <Link
               key={projet.id}
               to={`/projets/${projet.id}/kanban`}

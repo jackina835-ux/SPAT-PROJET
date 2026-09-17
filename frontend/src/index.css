@@ -244,6 +244,35 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------------- Liste des projets ---------------- */
 
+.onglets-projets {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.onglet {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 4px;
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--texte-doux);
+  cursor: pointer;
+}
+.onglet + .onglet { margin-left: 14px; }
+.onglet:hover { color: var(--texte); }
+.onglet-actif {
+  color: var(--accent-fonce);
+  border-bottom-color: var(--accent);
+}
+
 .grille-projets {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));

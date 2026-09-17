@@ -31,6 +31,73 @@
            0 4px 12px rgba(30, 30, 25, 0.04);
 }
 
+/* ---------------- Mode sombre ----------------
+   Applique automatiquement si le systeme le demande
+   (sauf choix explicite "clair"), ou force par le bouton
+   de l'entete via l'attribut data-theme sur <html>. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #1c1b17;
+    --surface: #262420;
+    --bordure: #3b382f;
+    --bordure-forte: #4f4b3e;
+
+    --texte: #eeece5;
+    --texte-doux: #a8a496;
+
+    --accent: #e0791a;
+    --accent-clair: #3d2a14;
+    --accent-fonce: #f5b06a;
+
+    --succes-couleur: #6bab5f;
+    --succes-clair: #1f3020;
+    --succes-fonce: #8fc986;
+
+    --avertissement: #d4b13a;
+    --avertissement-clair: #332b12;
+
+    --alerte: #e0776c;
+    --alerte-clair: #3a1f1c;
+
+    --ombre: 0 1px 3px rgba(0, 0, 0, 0.4),
+             0 6px 16px rgba(0, 0, 0, 0.3);
+  }
+  :root:not([data-theme="light"]) .bouton-principal:hover {
+    background: #b8620d;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fond: #1c1b17;
+  --surface: #262420;
+  --bordure: #3b382f;
+  --bordure-forte: #4f4b3e;
+
+  --texte: #eeece5;
+  --texte-doux: #a8a496;
+
+  --accent: #e0791a;
+  --accent-clair: #3d2a14;
+  --accent-fonce: #f5b06a;
+
+  --succes-couleur: #6bab5f;
+  --succes-clair: #1f3020;
+  --succes-fonce: #8fc986;
+
+  --avertissement: #d4b13a;
+  --avertissement-clair: #332b12;
+
+  --alerte: #e0776c;
+  --alerte-clair: #3a1f1c;
+
+  --ombre: 0 1px 3px rgba(0, 0, 0, 0.4),
+           0 6px 16px rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"] .bouton-principal:hover {
+  background: #b8620d;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -112,6 +179,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .entete-droite { display: flex; align-items: center; gap: 14px; }
+
+.entete-bascule-theme { display: flex; }
+.entete-bascule-theme:hover { color: var(--accent); }
+
 .entete-profil { text-align: right; line-height: 1.25; }
 .entete-profil small { display: block; color: var(--texte-doux); font-size: 0.76rem; }
 
@@ -725,6 +796,10 @@ a { color: inherit; text-decoration: none; }
   padding: 32px 22px 40px;
   background: #f6db94;
   border-right: 1px solid var(--bordure);
+  /* Fond jaune volontairement fixe, meme en mode sombre : le texte
+     doit donc rester sombre plutot que de suivre --texte global. */
+  --texte: #2b2308;
+  --texte-doux: #6b5a1f;
 }
 
 .accueil-bouton-projets {
@@ -1359,7 +1434,10 @@ a { color: inherit; text-decoration: none; }
 .calendrier-case-hors-mois { background: #faf9f6; }
 .calendrier-case-hors-mois .calendrier-numero { color: var(--bordure-forte); }
 
-.calendrier-case-weekend { background: #fdfaf1; }
+.calendrier-case-weekend {
+  background: #fdfaf1;
+  --texte-doux: #6b6558;
+}
 
 .calendrier-case-aujourdhui {
   background: var(--accent-clair);
